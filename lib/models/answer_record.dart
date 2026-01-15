@@ -12,4 +12,22 @@ class AnswerRecord {
     required this.userChoice,
     required this.wasCorrect,
   });
+
+  Map<String, dynamic> toJson() => {
+    'caseId': caseId,
+    'answeredAt': answeredAt.toIso8601String(),
+    'userChoice': userChoice.name,
+    'wasCorrect': wasCorrect,
+  };
+
+  static AnswerRecord fromJson(Map<String, dynamic> json) {
+    return AnswerRecord(
+      caseId: json['caseId'] as String,
+      answeredAt: DateTime.parse(json['answeredAt'] as String),
+      userChoice: (json['userChoice'] as String) == 'fake'
+          ? AnswerChoice.fake
+          : AnswerChoice.real,
+      wasCorrect: json['wasCorrect'] as bool,
+    );
+  }
 }

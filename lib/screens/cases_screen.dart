@@ -1,7 +1,9 @@
 import 'dart:math';
-import '../models/answer_record.dart';
+
 import 'package:flutter/material.dart';
+
 import '../data/sample_cases.dart';
+import '../models/answer_record.dart';
 import '../models/case_item.dart';
 import '../models/celebration_event.dart';
 import '../state/app_state_scope.dart';
@@ -25,7 +27,6 @@ class _CasesScreenState extends State<CasesScreen> {
   UserChoice? _choice;
   bool? _isCorrect;
 
-  // ✅ Celebration queue
   final List<CelebrationEvent> _pendingCelebrations = [];
 
   @override
@@ -49,9 +50,13 @@ class _CasesScreenState extends State<CasesScreen> {
     }
 
     List<int> fallback;
-    if (targetDifficulty == 3) fallback = [2, 1];
-    else if (targetDifficulty == 2) fallback = [1, 3];
-    else fallback = [2, 3];
+    if (targetDifficulty == 3) {
+      fallback = [2, 1];
+    } else if (targetDifficulty == 2) {
+      fallback = [1, 3];
+    } else {
+      fallback = [2, 3];
+    }
 
     for (final d in fallback) {
       final list = unsolved.where((c) => c.difficulty == d).toList();
@@ -60,6 +65,7 @@ class _CasesScreenState extends State<CasesScreen> {
         return list.first;
       }
     }
+
     return null;
   }
 
@@ -91,7 +97,7 @@ class _CasesScreenState extends State<CasesScreen> {
     }
   }
 
-  void _answer(UserChoice choice) {
+  Future<void> _answer(UserChoice choice) async {
     if (_choice != null) return;
     if (_current == null) return;
 
@@ -101,16 +107,17 @@ class _CasesScreenState extends State<CasesScreen> {
 
     final appState = AppStateScope.of(context);
 
-    // ✅ Get celebration events from AppState
-    final choiceEnum = (choice == UserChoice.fake) ? AnswerChoice.fake : AnswerChoice.real;
+    final choiceEnum = pickedFake ? AnswerChoice.fake : AnswerChoice.real;
 
-    final events = appState.recordCaseSolved(
+    // ✅ async now (persistence)
+    final events = await appState.recordCaseSolved(
       caseId: item.id,
       userChoice: choiceEnum,
       isCorrect: correct,
       difficulty: item.difficulty,
     );
 
+    if (!mounted) return;
 
     setState(() {
       _choice = choice;
@@ -122,21 +129,24 @@ class _CasesScreenState extends State<CasesScreen> {
   Future<void> _showCelebrationsIfAny() async {
     while (_pendingCelebrations.isNotEmpty) {
       final ev = _pendingCelebrations.removeAt(0);
+
       // ignore: use_build_context_synchronously
       await showDialog(
         context: context,
         barrierDismissible: false,
         builder: (_) => CelebrationDialog(event: ev),
       );
-      setState(() {}); // keep UI synced (optional but safe)
+
+      if (!mounted) return;
+      setState(() {});
     }
   }
 
   Future<void> _next() async {
-    // ✅ Show queued celebrations first
     if (_pendingCelebrations.isNotEmpty) {
       await _showCelebrationsIfAny();
     }
+    if (!mounted) return;
     _ensureCurrentCase();
   }
 
@@ -316,9 +326,7 @@ class _CasesScreenState extends State<CasesScreen> {
                             child: FilledButton(
                               onPressed: _next,
                               child: Text(
-                                _pendingCelebrations.isNotEmpty
-                                    ? 'Claim rewards'
-                                    : 'Next case',
+                                _pendingCelebrations.isNotEmpty ? 'Claim rewards' : 'Next case',
                               ),
                             ),
                           ),

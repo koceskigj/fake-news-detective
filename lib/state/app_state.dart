@@ -6,19 +6,42 @@ import '../models/user_progress.dart';
 class AppState {
   final UserProgress progress;
 
-  /// Session-only streak (consecutive correct answers without a wrong answer)
-  int _currentPerfectStreak = 0;
+  /// Consecutive correct answers in THIS session (used for adaptive difficulty)
+  int _sessionStreak = 0;
 
   AppState({required this.progress});
 
-  /// Call this when a user answers a case.
-  /// - Marks the case as solved (once)
-  /// - Updates counters
-  /// - Updates perfect streak
-  /// - Evaluates achievements and awards XP
+  int get sessionStreak => _sessionStreak;
+
+  /// Target difficulty based on streak.
+  /// 0-2 => easy(1), 3-4 => medium(2), 5+ => hard(3)
+  int targetDifficultyFromStreak() {
+    if (_sessionStreak >= 5) return 3;
+    if (_sessionStreak >= 3) return 2;
+    return 1;
+  }
+
+  /// XP per difficulty
+  int xpForDifficulty(int difficulty) {
+    switch (difficulty) {
+      case 3:
+        return 20;
+      case 2:
+        return 15;
+      default:
+        return 10;
+    }
+  }
+
+  /// Call when a user answers a case.
+  /// - updates solved/correct counters
+  /// - updates streak (session)
+  /// - awards XP based on difficulty (only if correct)
+  /// - unlocks achievements (and awards achievement XP)
   void recordCaseSolved({
     required String caseId,
     required bool isCorrect,
+    required int difficulty,
     DateTime? now,
   }) {
     final t = now ?? DateTime.now();
@@ -31,35 +54,27 @@ class AppState {
 
     if (isCorrect) {
       progress.correctAnswersTotal += 1;
-      _currentPerfectStreak += 1;
-      if (_currentPerfectStreak > progress.bestPerfectStreak) {
-        progress.bestPerfectStreak = _currentPerfectStreak;
+
+      // Update streaks
+      _sessionStreak += 1;
+      if (_sessionStreak > progress.bestPerfectStreak) {
+        progress.bestPerfectStreak = _sessionStreak;
       }
-      // Base reward for correct answer
-      progress.awardXp(10);
+
+      // XP reward scaled by difficulty
+      progress.awardXp(xpForDifficulty(difficulty));
     } else {
-      // Reset streak on wrong answer
-      _currentPerfectStreak = 0;
-      // Small penalty is optional; keep it friendly
-      // progress.awardXp(-2);
+      // Wrong answer resets streak and "drops" challenge naturally
+      _sessionStreak = 0;
     }
 
-    // Achievements may unlock as a result
     _evaluateAndUnlockAchievements(t);
   }
 
-  /// Manual XP add (useful for testing or future features)
+  /// Manual XP add (still useful later)
   void addXp(int amount, {DateTime? now}) {
     progress.awardXp(amount);
     _evaluateAndUnlockAchievements(now ?? DateTime.now());
-  }
-
-  /// If you later implement daily streak logic, call this on app open.
-  void recordAppOpened({DateTime? now}) {
-    final t = now ?? DateTime.now();
-    // Placeholder: daily streak rules will be implemented later.
-    progress.lastOpenDate = t;
-    _evaluateAndUnlockAchievements(t);
   }
 
   int _valueForCriteria(AchievementCriteria c) {

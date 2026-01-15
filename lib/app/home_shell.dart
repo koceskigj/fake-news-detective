@@ -3,6 +3,7 @@ import '../screens/cases_screen.dart';
 import '../screens/learn_screen.dart';
 import '../screens/rewards_screen.dart';
 import '../screens/profile_screen.dart';
+import '../state/app_state_scope.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -11,7 +12,7 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   int _index = 0;
 
   final _pages = const [
@@ -20,6 +21,34 @@ class _HomeShellState extends State<HomeShell> {
     RewardsScreen(),
     ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    // Trigger once after first build (app start)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      AppStateScope.of(context).onAppResumed();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
+
+    if (state == AppLifecycleState.resumed) {
+      AppStateScope.of(context).onAppResumed();
+      // No setState needed; streak event shows after next solved case.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

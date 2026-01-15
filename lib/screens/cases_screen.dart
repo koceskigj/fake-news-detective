@@ -3,9 +3,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../data/sample_cases.dart';
 import '../models/case_item.dart';
+import '../models/celebration_event.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
 import '../widgets/case_post_card.dart';
+import '../widgets/celebration_dialog.dart';
 
 enum UserChoice { real, fake }
 
@@ -23,6 +25,9 @@ class _CasesScreenState extends State<CasesScreen> {
   UserChoice? _choice;
   bool? _isCorrect;
 
+  // ✅ Celebration queue
+  final List<CelebrationEvent> _pendingCelebrations = [];
+
   @override
   void initState() {
     super.initState();
@@ -37,17 +42,12 @@ class _CasesScreenState extends State<CasesScreen> {
     required List<CaseItem> unsolved,
     required int targetDifficulty,
   }) {
-    // Prefer target difficulty
     final preferred = unsolved.where((c) => c.difficulty == targetDifficulty).toList();
     if (preferred.isNotEmpty) {
       preferred.shuffle(Random());
       return preferred.first;
     }
 
-    // If none, fall back to nearest difficulty:
-    // target 3 -> try 2 then 1
-    // target 2 -> try 1 then 3
-    // target 1 -> try 2 then 3
     List<int> fallback;
     if (targetDifficulty == 3) fallback = [2, 1];
     else if (targetDifficulty == 2) fallback = [1, 3];
@@ -60,8 +60,6 @@ class _CasesScreenState extends State<CasesScreen> {
         return list.first;
       }
     }
-
-    // Nothing available
     return null;
   }
 
@@ -88,7 +86,6 @@ class _CasesScreenState extends State<CasesScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Pick initial case once we have context
     if (_current == null && _choice == null && _isCorrect == null) {
       _ensureCurrentCase();
     }
@@ -103,7 +100,9 @@ class _CasesScreenState extends State<CasesScreen> {
     final correct = pickedFake == item.isFake;
 
     final appState = AppStateScope.of(context);
-    appState.recordCaseSolved(
+
+    // ✅ Get celebration events from AppState
+    final events = appState.recordCaseSolved(
       caseId: item.id,
       isCorrect: correct,
       difficulty: item.difficulty,
@@ -112,10 +111,28 @@ class _CasesScreenState extends State<CasesScreen> {
     setState(() {
       _choice = choice;
       _isCorrect = correct;
+      _pendingCelebrations.addAll(events);
     });
   }
 
-  void _next() {
+  Future<void> _showCelebrationsIfAny() async {
+    while (_pendingCelebrations.isNotEmpty) {
+      final ev = _pendingCelebrations.removeAt(0);
+      // ignore: use_build_context_synchronously
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => CelebrationDialog(event: ev),
+      );
+      setState(() {}); // keep UI synced (optional but safe)
+    }
+  }
+
+  Future<void> _next() async {
+    // ✅ Show queued celebrations first
+    if (_pendingCelebrations.isNotEmpty) {
+      await _showCelebrationsIfAny();
+    }
     _ensureCurrentCase();
   }
 
@@ -131,7 +148,6 @@ class _CasesScreenState extends State<CasesScreen> {
       appBar: BrandedAppBar(
         title: 'Fake News Detective',
         actions: [
-          // Streak chip
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Center(
@@ -151,7 +167,6 @@ class _CasesScreenState extends State<CasesScreen> {
               ),
             ),
           ),
-          // XP/Level chip
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Center(
@@ -177,17 +192,40 @@ class _CasesScreenState extends State<CasesScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: _current == null
-              ? _NoMoreCases(
-            remaining: 0,
-            onTryAgain: () {
-              // For now: nothing to do (finite dataset).
-              // Later: AI generation will create new cases.
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Later: AI-generated cases will enable unlimited play ✅'),
+              ? Center(
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle_outline, size: 44),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'You completed all built-in cases!',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Next step: AI-generated cases will enable unlimited new training posts.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 14),
+                    FilledButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Later: AI will generate unlimited cases ✅'),
+                          ),
+                        );
+                      },
+                      child: const Text('About AI cases'),
+                    ),
+                  ],
                 ),
-              );
-            },
+              ),
+            ),
           )
               : Column(
             children: [
@@ -200,9 +238,7 @@ class _CasesScreenState extends State<CasesScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: LinearProgressIndicator(
-                      value: _allCases.isEmpty
-                          ? 0
-                          : (1 - (unsolvedCount / _allCases.length)),
+                      value: _allCases.isEmpty ? 0 : (1 - (unsolvedCount / _allCases.length)),
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
@@ -243,9 +279,7 @@ class _CasesScreenState extends State<CasesScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: (_isCorrect ?? false)
-                        ? cs.tertiaryContainer
-                        : cs.errorContainer,
+                    color: (_isCorrect ?? false) ? cs.tertiaryContainer : cs.errorContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -277,7 +311,11 @@ class _CasesScreenState extends State<CasesScreen> {
                           Expanded(
                             child: FilledButton(
                               onPressed: _next,
-                              child: const Text('Next case'),
+                              child: Text(
+                                _pendingCelebrations.isNotEmpty
+                                    ? 'Claim rewards'
+                                    : 'Next case',
+                              ),
                             ),
                           ),
                         ],
@@ -286,49 +324,6 @@ class _CasesScreenState extends State<CasesScreen> {
                   ),
                 ),
               ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NoMoreCases extends StatelessWidget {
-  final int remaining;
-  final VoidCallback onTryAgain;
-
-  const _NoMoreCases({
-    required this.remaining,
-    required this.onTryAgain,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.check_circle_outline, size: 44),
-              const SizedBox(height: 10),
-              const Text(
-                'You completed all built-in cases!',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Next step: we’ll add AI-generated cases so the app can create unlimited new training posts.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 14),
-              FilledButton(
-                onPressed: onTryAgain,
-                child: const Text('About AI cases'),
-              ),
             ],
           ),
         ),

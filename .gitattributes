@@ -1,15 +1,24 @@
-# Mark non-Dart folders as vendored so GitHub Linguist ignores them
-android/** linguist-vendored
-ios/** linguist-vendored
-linux/** linguist-vendored
-macos/** linguist-vendored
-windows/** linguist-vendored
-web/** linguist-vendored
+# Ignore Flutter platform folders in GitHub language stats
+android/** linguist-vendored=true
+ios/** linguist-vendored=true
+web/** linguist-vendored=true
+windows/** linguist-vendored=true
+macos/** linguist-vendored=true
+linux/** linguist-vendored=true
 
-# Ignore build and tool directories
-build/** linguist-vendored
-.gradle/** linguist-vendored
-.dart_tool/** linguist-vendored
+# Ignore build/tool output
+build/** linguist-vendored=true
+.dart_tool/** linguist-vendored=true
+.gradle/** linguist-vendored=true
 
-# Ensure Dart is counted
+# Also ignore common non-Dart file types (in case they exist outside those folders)
+*.html linguist-vendored=true
+*.swift linguist-vendored=true
+*.m linguist-vendored=true
+*.kt linguist-vendored=true
+*.java linguist-vendored=true
+*.js linguist-vendored=true
+*.css linguist-vendored=true
+
+# Force Dart recognition
 *.dart linguist-language=Dart

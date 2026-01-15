@@ -1,0 +1,15 @@
+# Mark non-Dart folders as vendored so GitHub Linguist ignores them
+android/** linguist-vendored
+ios/** linguist-vendored
+linux/** linguist-vendored
+macos/** linguist-vendored
+windows/** linguist-vendored
+web/** linguist-vendored
+
+# Ignore build and tool directories
+build/** linguist-vendored
+.gradle/** linguist-vendored
+.dart_tool/** linguist-vendored
+
+# Ensure Dart is counted
+*.dart linguist-language=Dart

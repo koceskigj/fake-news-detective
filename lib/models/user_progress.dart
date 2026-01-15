@@ -1,32 +1,24 @@
+import 'answer_record.dart';
+
 class UserProgress {
-  /// Local-only unique id
   final String userId;
 
   int xp;
   int level;
 
-  /// Daily streak (opens on consecutive days)
   int dailyStreak;
-
-  /// Last date the app was opened (used for streak logic later)
   DateTime? lastOpenDate;
 
-  /// Total counters
   int casesSolvedTotal;
   int correctAnswersTotal;
-
-  /// For “perfect streak in a session” you can compute on the fly,
-  /// but we keep a best record if you want.
   int bestPerfectStreak;
 
-  /// Which cases the user has already solved
   final Set<String> solvedCaseIds;
-
-  /// Which achievements are unlocked
   final Set<String> unlockedAchievementIds;
-
-  /// When each achievement was unlocked
   final Map<String, DateTime> achievementUnlockedAt;
+
+  /// ✅ Bounded history: last N answers (newest appended last)
+  final List<AnswerRecord> recentAnswers;
 
   UserProgress({
     required this.userId,
@@ -40,15 +32,13 @@ class UserProgress {
     Set<String>? solvedCaseIds,
     Set<String>? unlockedAchievementIds,
     Map<String, DateTime>? achievementUnlockedAt,
+    List<AnswerRecord>? recentAnswers,
   })  : solvedCaseIds = solvedCaseIds ?? <String>{},
         unlockedAchievementIds = unlockedAchievementIds ?? <String>{},
-        achievementUnlockedAt = achievementUnlockedAt ?? <String, DateTime>{};
+        achievementUnlockedAt = achievementUnlockedAt ?? <String, DateTime>{},
+        recentAnswers = recentAnswers ?? <AnswerRecord>[];
 
-  /// Basic level formula (simple and readable)
-  /// You can change this later without breaking UI.
   int computeLevelFromXp() {
-    // Level 1: 0-99, Level 2: 100-219, Level 3: 220-359 ...
-    // Slightly increasing requirement per level.
     int lvl = 1;
     int needed = 100;
     int remaining = xp;

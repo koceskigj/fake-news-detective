@@ -1,5 +1,5 @@
 import 'dart:math';
-
+import '../models/answer_record.dart';
 import 'package:flutter/material.dart';
 import '../data/sample_cases.dart';
 import '../models/case_item.dart';
@@ -102,11 +102,15 @@ class _CasesScreenState extends State<CasesScreen> {
     final appState = AppStateScope.of(context);
 
     // ✅ Get celebration events from AppState
+    final choiceEnum = (choice == UserChoice.fake) ? AnswerChoice.fake : AnswerChoice.real;
+
     final events = appState.recordCaseSolved(
       caseId: item.id,
+      userChoice: choiceEnum,
       isCorrect: correct,
       difficulty: item.difficulty,
     );
+
 
     setState(() {
       _choice = choice;

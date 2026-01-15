@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../data/achievements_catalog.dart';
 import '../models/achievement.dart';
+import '../models/answer_record.dart';
 import '../models/celebration_event.dart';
 import '../models/user_progress.dart';
 
@@ -8,9 +9,9 @@ class AppState {
   final UserProgress progress;
 
   int _sessionStreak = 0;
-
-  // ✅ Shown after the first case solved that day
   CelebrationEvent? _pendingDailyStreakEvent;
+
+  static const int maxRecentAnswers = 50;
 
   AppState({required this.progress});
 
@@ -34,33 +35,27 @@ class AppState {
   }
 
   String _dateKey(DateTime dt) {
-    // local date key: YYYY-MM-DD
     String two(int n) => n.toString().padLeft(2, '0');
     return '${dt.year}-${two(dt.month)}-${two(dt.day)}';
   }
 
   int _daysBetweenDateOnly(DateTime a, DateTime b) {
-    // Compare by calendar days (local timezone)
     final da = DateTime(a.year, a.month, a.day);
     final db = DateTime(b.year, b.month, b.day);
     return db.difference(da).inDays;
   }
 
-  /// Call on app start/resume (not at midnight).
-  /// Updates daily streak based on local calendar day.
   void onAppResumed({DateTime? now}) {
     final t = now ?? DateTime.now();
 
     final last = progress.lastOpenDate;
     progress.lastOpenDate = t;
 
-    // First ever open: start streak at 1 but don't spam celebration
     if (last == null) {
       if (progress.dailyStreak == 0) progress.dailyStreak = 1;
       return;
     }
 
-    // Same calendar day => no change
     if (_dateKey(last) == _dateKey(t)) return;
 
     final diffDays = _daysBetweenDateOnly(last, t);
@@ -68,14 +63,11 @@ class AppState {
     if (diffDays == 1) {
       progress.dailyStreak += 1;
     } else if (diffDays > 1) {
-      // missed at least one day
       progress.dailyStreak = 1;
     } else {
-      // time travel / clock change; ignore
       return;
     }
 
-    // Queue streak celebration to show after first case solve
     _pendingDailyStreakEvent =
         CelebrationEvent.dailyStreakUpdated(progress.dailyStreak);
 
@@ -84,22 +76,36 @@ class AppState {
     }
   }
 
-  /// Returns celebration events unlocked by this action.
   List<CelebrationEvent> recordCaseSolved({
     required String caseId,
+    required AnswerChoice userChoice,
     required bool isCorrect,
     required int difficulty,
     DateTime? now,
   }) {
     final t = now ?? DateTime.now();
-
     final events = <CelebrationEvent>[];
     final oldLevel = progress.level;
 
-    // Count case only once
+    // Prevent duplicates for built-in dataset (fine)
     final wasNew = progress.solvedCaseIds.add(caseId);
     if (wasNew) {
       progress.casesSolvedTotal += 1;
+    }
+
+    // ✅ Record answer (bounded)
+    progress.recentAnswers.add(
+      AnswerRecord(
+        caseId: caseId,
+        answeredAt: t,
+        userChoice: userChoice,
+        wasCorrect: isCorrect,
+      ),
+    );
+    if (progress.recentAnswers.length > maxRecentAnswers) {
+      // remove oldest extras
+      final extra = progress.recentAnswers.length - maxRecentAnswers;
+      progress.recentAnswers.removeRange(0, extra);
     }
 
     if (isCorrect) {
@@ -115,21 +121,18 @@ class AppState {
       _sessionStreak = 0;
     }
 
-    // Achievements can add XP
     final unlockedAchievementIds = _evaluateAndUnlockAchievements(t);
     for (final id in unlockedAchievementIds) {
       events.add(CelebrationEvent.achievementUnlocked(id));
     }
 
-    // Level up check (after all XP changes)
     final newLevel = progress.level;
     if (newLevel > oldLevel) {
       events.add(CelebrationEvent.levelUp(oldLevel, newLevel));
     }
 
-    // ✅ Inject daily streak celebration (after the first case solved that day)
     if (_pendingDailyStreakEvent != null) {
-      events.insert(0, _pendingDailyStreakEvent!); // show it first
+      events.insert(0, _pendingDailyStreakEvent!);
       _pendingDailyStreakEvent = null;
     }
 

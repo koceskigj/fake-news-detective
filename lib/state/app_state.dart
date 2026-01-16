@@ -195,4 +195,36 @@ class AppState {
 
     return unlocked;
   }
+
+  Future<void> resetProgress() async {
+    // Clear persisted storage
+    await LocalStorage.clearAll();
+
+    // Reset in-memory progress fields
+    progress.xp = 0;
+    progress.level = 1;
+
+    progress.dailyStreak = 0;
+    progress.lastOpenDate = null;
+
+    progress.casesSolvedTotal = 0;
+    progress.correctAnswersTotal = 0;
+    progress.bestPerfectStreak = 0;
+
+    // Persisted session streak (🔥)
+    progress.sessionStreak = 0;
+
+    progress.solvedCaseIds.clear();
+    progress.unlockedAchievementIds.clear();
+    progress.achievementUnlockedAt.clear();
+    progress.recentAnswers.clear();
+
+    // Clear pending daily streak celebration
+    _pendingDailyStreakEvent = null;
+
+    // Save clean state so next launch is clean too
+    await LocalStorage.saveProgressJson(progress.toJson());
+  }
+
+
 }

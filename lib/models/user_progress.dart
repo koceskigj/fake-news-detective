@@ -2,6 +2,9 @@ import 'answer_record.dart';
 
 class UserProgress {
   final String userId;
+  String displayName;
+  String avatarKey;
+
 
   int xp;
   int level;
@@ -25,6 +28,8 @@ class UserProgress {
     required this.userId,
     this.xp = 0,
     this.level = 1,
+    this.displayName = 'Guest Detective',
+    this.avatarKey = 'monkey',
     this.dailyStreak = 0,
     this.lastOpenDate,
     this.casesSolvedTotal = 0,
@@ -73,6 +78,8 @@ class UserProgress {
     'userId': userId,
     'xp': xp,
     'level': level,
+    'displayName': displayName,
+    'avatarKey': avatarKey,
     'dailyStreak': dailyStreak,
     'lastOpenDate': lastOpenDate?.toIso8601String(),
     'casesSolvedTotal': casesSolvedTotal,
@@ -104,6 +111,8 @@ class UserProgress {
       userId: json['userId'] as String,
       xp: (json['xp'] as num?)?.toInt() ?? 0,
       level: (json['level'] as num?)?.toInt() ?? 1,
+      displayName: (json['displayName'] as String?) ?? 'Guest Detective',
+      avatarKey: (json['avatarKey'] as String?) ?? 'monkey',
       dailyStreak: (json['dailyStreak'] as num?)?.toInt() ?? 0,
       lastOpenDate: json['lastOpenDate'] == null
           ? null

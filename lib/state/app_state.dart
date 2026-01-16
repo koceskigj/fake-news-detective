@@ -226,5 +226,18 @@ class AppState {
     await LocalStorage.saveProgressJson(progress.toJson());
   }
 
+  Future<void> setDisplayName(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    progress.displayName = trimmed;
+    await LocalStorage.saveProgressJson(progress.toJson());
+  }
+
+  Future<void> setAvatarKey(String key) async {
+    progress.avatarKey = key;
+    await LocalStorage.saveProgressJson(progress.toJson());
+  }
+
+
 
 }

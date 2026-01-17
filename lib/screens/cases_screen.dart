@@ -100,9 +100,20 @@ class _CasesScreenState extends State<CasesScreen> {
 
     final unsolved = _unsolvedCases(progress.solvedCaseIds);
     if (unsolved.isEmpty) {
-      setState(() => _current = null);
+      final target = appState.targetDifficultyFromStreak();
+      appState.caseRepository
+          .generateCase(progress: progress, targetDifficulty: target)
+          .then((gen) {
+        if (!mounted) return;
+        setState(() {
+          _current = gen; // may be null if repo can't generate
+          _choice = null;
+          _isCorrect = null;
+        });
+      });
       return;
     }
+
 
     final target = appState.targetDifficultyFromStreak();
     final picked = _pickNextCase(unsolved: unsolved, targetDifficulty: target);
@@ -199,11 +210,7 @@ class _CasesScreenState extends State<CasesScreen> {
                   children: [
                     const Icon(Icons.check_circle_outline, size: 44),
                     const SizedBox(height: 10),
-                    const Text(
-                      'You completed all built-in cases!',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-                      textAlign: TextAlign.center,
-                    ),
+                    const Center(child: CircularProgressIndicator()),
                     const SizedBox(height: 10),
                     const Text(
                       'Next step: AI-generated cases will enable unlimited new training posts.',

@@ -7,6 +7,8 @@ import '../models/user_progress.dart';
 import '../services/local_storage.dart';
 import '../repositories/case_repository.dart';
 import '../repositories/sample_case_repository.dart';
+import '../repositories/hybrid_case_repository.dart';
+
 
 
 class AppState {
@@ -21,7 +23,7 @@ class AppState {
   AppState({
     required this.progress,
     CaseRepository? caseRepository,
-  }) : caseRepository = caseRepository ?? SampleCaseRepository();
+  }) : caseRepository = caseRepository ?? HybridCaseRepository();
 
 
   /// ✅ Persisted session streak (consecutive correct answers)

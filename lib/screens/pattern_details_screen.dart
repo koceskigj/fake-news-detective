@@ -10,7 +10,7 @@ class PatternDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: BrandedAppBar(title: pattern.title, showMascot: false),
+      appBar: const BrandedAppBar(),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

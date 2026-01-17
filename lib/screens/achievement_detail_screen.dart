@@ -20,7 +20,7 @@ class AchievementDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: BrandedAppBar(title: achievement.title, showMascot: false),
+      appBar: const BrandedAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

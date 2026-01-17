@@ -176,30 +176,8 @@ class _CasesScreenState extends State<CasesScreen> {
 
     if (isLoading) {
       return Scaffold(
-        appBar: BrandedAppBar(
-          title: 'Fake News Detective',
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: cs.primaryContainer,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    'Loading…',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: cs.onPrimaryContainer,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+        appBar: const BrandedAppBar(),
+
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -207,49 +185,7 @@ class _CasesScreenState extends State<CasesScreen> {
     final unsolvedCount = _unsolvedCases(progress.solvedCaseIds).length;
 
     return Scaffold(
-      appBar: BrandedAppBar(
-        title: 'Fake News Detective',
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: cs.secondaryContainer,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  '🔥 ${appState.sessionStreak}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: cs.onSecondaryContainer,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  'Lvl ${progress.level} • XP ${progress.xp}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: cs.onPrimaryContainer,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      appBar: const BrandedAppBar(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),

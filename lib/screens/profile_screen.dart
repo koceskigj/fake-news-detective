@@ -237,7 +237,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final p = appState.progress;
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Profile'),
+      appBar: const BrandedAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

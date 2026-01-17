@@ -1,40 +1,70 @@
 import 'package:flutter/material.dart';
+import '../state/app_state_scope.dart';
 
 class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
-  final Widget? leading;
-  final List<Widget>? actions;
-  final bool showMascot;
+  final bool showDailyStreak;
+  final List<Widget>? extraActions;
 
   const BrandedAppBar({
     super.key,
-    required this.title,
-    this.leading,
-    this.actions,
-    this.showMascot = true,
+    this.showDailyStreak = true,
+    this.extraActions,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final appState = AppStateScope.of(context);
+    final daily = appState.progress.dailyStreak;
 
     return AppBar(
-      leading: leading,
+      automaticallyImplyLeading: false,
+      titleSpacing: 12,
       title: Row(
         children: [
-          if (showMascot) ...[
-            Icon(Icons.manage_search, color: cs.primary),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Text(
-              title,
-              overflow: TextOverflow.ellipsis,
+          // Mascot/logo placeholder
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: cs.primaryContainer,
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Icon(
+              Icons.emoji_nature, // Stojche placeholder
+              color: cs.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Text(
+            'Fake News Detective',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
           ),
         ],
       ),
-      actions: actions,
+      actions: [
+        if (showDailyStreak)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: cs.secondaryContainer,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '📅 $daily',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: cs.onSecondaryContainer,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ...?extraActions,
+      ],
     );
   }
 

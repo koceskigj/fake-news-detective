@@ -20,7 +20,7 @@ class LearnScreen extends StatelessWidget {
     final tip = tipOfTheDay();
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Learn'),
+      appBar: const BrandedAppBar(),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

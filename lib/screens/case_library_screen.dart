@@ -43,7 +43,7 @@ class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
         : records;
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Case Library', showMascot: false),
+      appBar: const BrandedAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

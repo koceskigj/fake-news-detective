@@ -26,7 +26,7 @@ class CaseReviewScreen extends StatelessWidget {
         : (item.isFake ? 'FAKE' : 'REAL');
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Case Review', showMascot: false),
+      appBar: const BrandedAppBar(),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

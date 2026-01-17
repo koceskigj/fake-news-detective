@@ -25,7 +25,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
     final progress = appState.progress;
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Rewards'),
+      appBar: const BrandedAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

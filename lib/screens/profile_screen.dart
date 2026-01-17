@@ -61,7 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   maxLength: 20,
                   decoration: const InputDecoration(
                     labelText: 'Username',
-                    hintText: 'e.g., Gjorgji',
+                    hintText: 'e.g., detective123',
                     border: OutlineInputBorder(),
                   ),
                   onSubmitted: (_) {

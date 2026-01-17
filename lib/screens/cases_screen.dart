@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import '../data/sample_cases.dart';
 import '../models/answer_record.dart';
 import '../models/case_item.dart';
 import '../models/celebration_event.dart';
@@ -21,7 +20,9 @@ class CasesScreen extends StatefulWidget {
 }
 
 class _CasesScreenState extends State<CasesScreen> {
-  late final List<CaseItem> _allCases;
+  // ✅ no longer late/final: loaded async from repository
+  List<CaseItem> _allCases = [];
+
   CaseItem? _current;
 
   UserChoice? _choice;
@@ -29,10 +30,32 @@ class _CasesScreenState extends State<CasesScreen> {
 
   final List<CelebrationEvent> _pendingCelebrations = [];
 
+  bool _loadedOnce = false;
+
   @override
-  void initState() {
-    super.initState();
-    _allCases = List.of(sampleCases)..shuffle(Random());
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // ✅ safe place to use AppStateScope.of(context)
+    if (!_loadedOnce) {
+      _loadedOnce = true;
+      _loadCases();
+    }
+  }
+
+  Future<void> _loadCases() async {
+    final appState = AppStateScope.of(context);
+
+    final loaded = await appState.caseRepository.loadInitialCases();
+    loaded.shuffle(Random());
+
+    if (!mounted) return;
+
+    setState(() {
+      _allCases = loaded;
+    });
+
+    _ensureCurrentCase();
   }
 
   List<CaseItem> _unsolvedCases(Set<String> solvedIds) {
@@ -70,6 +93,8 @@ class _CasesScreenState extends State<CasesScreen> {
   }
 
   void _ensureCurrentCase() {
+    if (_allCases.isEmpty) return; // still loading
+
     final appState = AppStateScope.of(context);
     final progress = appState.progress;
 
@@ -89,14 +114,6 @@ class _CasesScreenState extends State<CasesScreen> {
     });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_current == null && _choice == null && _isCorrect == null) {
-      _ensureCurrentCase();
-    }
-  }
-
   Future<void> _answer(UserChoice choice) async {
     if (_choice != null) return;
     if (_current == null) return;
@@ -109,7 +126,6 @@ class _CasesScreenState extends State<CasesScreen> {
 
     final choiceEnum = pickedFake ? AnswerChoice.fake : AnswerChoice.real;
 
-    // ✅ async now (persistence)
     final events = await appState.recordCaseSolved(
       caseId: item.id,
       userChoice: choiceEnum,
@@ -155,6 +171,38 @@ class _CasesScreenState extends State<CasesScreen> {
     final cs = Theme.of(context).colorScheme;
     final appState = AppStateScope.of(context);
     final progress = appState.progress;
+
+    final isLoading = _allCases.isEmpty;
+
+    if (isLoading) {
+      return Scaffold(
+        appBar: BrandedAppBar(
+          title: 'Fake News Detective',
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    'Loading…',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: cs.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     final unsolvedCount = _unsolvedCases(progress.solvedCaseIds).length;
 

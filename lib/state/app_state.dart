@@ -5,15 +5,24 @@ import '../models/answer_record.dart';
 import '../models/celebration_event.dart';
 import '../models/user_progress.dart';
 import '../services/local_storage.dart';
+import '../repositories/case_repository.dart';
+import '../repositories/sample_case_repository.dart';
+
 
 class AppState {
   final UserProgress progress;
+
+  final CaseRepository caseRepository;
 
   CelebrationEvent? _pendingDailyStreakEvent;
 
   static const int maxRecentAnswers = 50;
 
-  AppState({required this.progress});
+  AppState({
+    required this.progress,
+    CaseRepository? caseRepository,
+  }) : caseRepository = caseRepository ?? SampleCaseRepository();
+
 
   /// ✅ Persisted session streak (consecutive correct answers)
   int get sessionStreak => progress.sessionStreak;

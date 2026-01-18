@@ -9,6 +9,7 @@ import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
 import '../widgets/case_post_card.dart';
 import '../widgets/celebration_dialog.dart';
+import '../widgets/stojche_hint_area.dart';
 
 enum UserChoice { real, fake }
 
@@ -20,23 +21,26 @@ class CasesScreen extends StatefulWidget {
 }
 
 class _CasesScreenState extends State<CasesScreen> {
-  // ✅ no longer late/final: loaded async from repository
   List<CaseItem> _allCases = [];
-
   CaseItem? _current;
 
   UserChoice? _choice;
   bool? _isCorrect;
 
+  // Celebrations queue
   final List<CelebrationEvent> _pendingCelebrations = [];
 
+  // Repository load guard
   bool _loadedOnce = false;
+
+  // Stojche hint state
+  StojcheMood _stojcheMood = StojcheMood.idle;
+  bool _hintUsed = false;
+  String? _hintText;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    // ✅ safe place to use AppStateScope.of(context)
     if (!_loadedOnce) {
       _loadedOnce = true;
       _loadCases();
@@ -55,7 +59,7 @@ class _CasesScreenState extends State<CasesScreen> {
       _allCases = loaded;
     });
 
-    _ensureCurrentCase();
+    await _ensureCurrentCase();
   }
 
   List<CaseItem> _unsolvedCases(Set<String> solvedIds) {
@@ -92,36 +96,77 @@ class _CasesScreenState extends State<CasesScreen> {
     return null;
   }
 
-  void _ensureCurrentCase() {
-    if (_allCases.isEmpty) return; // still loading
+  Future<void> _ensureCurrentCase() async {
+    // still loading initial cases
+    if (_loadedOnce && _allCases.isEmpty) return;
 
     final appState = AppStateScope.of(context);
     final progress = appState.progress;
 
+    // Prefer built-in unsolved if any exist
     final unsolved = _unsolvedCases(progress.solvedCaseIds);
-    if (unsolved.isEmpty) {
+
+    CaseItem? nextItem;
+
+    if (unsolved.isNotEmpty) {
       final target = appState.targetDifficultyFromStreak();
-      appState.caseRepository
-          .generateCase(progress: progress, targetDifficulty: target)
-          .then((gen) {
-        if (!mounted) return;
-        setState(() {
-          _current = gen; // may be null if repo can't generate
-          _choice = null;
-          _isCorrect = null;
-        });
-      });
-      return;
+      nextItem = _pickNextCase(unsolved: unsolved, targetDifficulty: target);
+    } else {
+      // ✅ fallback to generated case (infinite)
+      final target = appState.targetDifficultyFromStreak();
+      nextItem = await appState.caseRepository.generateCase(
+        progress: progress,
+        targetDifficulty: target,
+      );
     }
 
-
-    final target = appState.targetDifficultyFromStreak();
-    final picked = _pickNextCase(unsolved: unsolved, targetDifficulty: target);
+    if (!mounted) return;
 
     setState(() {
-      _current = picked;
+      _current = nextItem;
       _choice = null;
       _isCorrect = null;
+
+      // Reset Stojche for new case
+      _stojcheMood = StojcheMood.idle;
+      _hintUsed = false;
+      _hintText = null;
+    });
+  }
+
+  String _generateHint(CaseItem item) {
+    final tags = item.tags.map((t) => t.toLowerCase()).toList();
+
+    String reason;
+    if (tags.contains('clickbait') || tags.contains('sharebait')) {
+      reason = 'This feels like clickbait: dramatic wording that tries to force a quick reaction.';
+    } else if (tags.contains('missing-source') || tags.contains('vague-evidence')) {
+      reason = 'I don’t see a credible source. “Experts say…” without names or links is suspicious.';
+    } else if (tags.contains('fearbait') || tags.contains('urgent-language')) {
+      reason = 'It uses urgency and fear to push you to act fast. Real info is usually calmer and specific.';
+    } else if (tags.contains('context-missing') || tags.contains('cropped-clip')) {
+      reason = 'This might be missing context. Short clips/screenshots can change the meaning.';
+    } else if (tags.contains('absurd-claim') || tags.contains('too-good-to-be-true')) {
+      reason = 'It sounds too good to be true. Extraordinary claims need strong evidence.';
+    } else if (!item.isFake) {
+      reason = 'This sounds specific and practical. That usually points toward real information.';
+    } else {
+      reason = 'Something feels off: vague details and no easy way to verify.';
+    }
+
+    final leaning = item.isFake ? 'I’m leaning towards FAKE.' : 'I’m leaning towards REAL.';
+    return '$reason\n\n$leaning';
+  }
+
+  void _askStojche() {
+    if (_current == null) return;
+    if (_hintUsed) return;
+    if (_choice != null) return;
+
+    setState(() {
+      _hintUsed = true;
+      _stojcheMood = StojcheMood.talking;
+      _hintText = _generateHint(_current!);
     });
   }
 
@@ -137,14 +182,16 @@ class _CasesScreenState extends State<CasesScreen> {
 
     final choiceEnum = pickedFake ? AnswerChoice.fake : AnswerChoice.real;
 
+    // update mood for feedback
+    final mood = correct ? StojcheMood.celebrate : StojcheMood.wise;
+
     final events = await appState.recordCaseSolved(
-      item: item,
       caseId: item.id,
       userChoice: choiceEnum,
       isCorrect: correct,
       difficulty: item.difficulty,
+      item: item,
     );
-
 
     if (!mounted) return;
 
@@ -152,6 +199,7 @@ class _CasesScreenState extends State<CasesScreen> {
       _choice = choice;
       _isCorrect = correct;
       _pendingCelebrations.addAll(events);
+      _stojcheMood = mood;
     });
   }
 
@@ -176,7 +224,7 @@ class _CasesScreenState extends State<CasesScreen> {
       await _showCelebrationsIfAny();
     }
     if (!mounted) return;
-    _ensureCurrentCase();
+    await _ensureCurrentCase();
   }
 
   @override
@@ -185,57 +233,31 @@ class _CasesScreenState extends State<CasesScreen> {
     final appState = AppStateScope.of(context);
     final progress = appState.progress;
 
-    final isLoading = _allCases.isEmpty;
-
-    if (isLoading) {
-      return Scaffold(
-        appBar: const BrandedAppBar(),
-
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    final unsolvedCount = _unsolvedCases(progress.solvedCaseIds).length;
+    // Loading initial cases from repo
+    final isLoadingInitial = _loadedOnce && _allCases.isEmpty && _current == null;
 
     return Scaffold(
-      appBar: const BrandedAppBar(),
+      appBar: const BrandedAppBar(), // branded, no screen title
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: _current == null
-              ? Center(
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.check_circle_outline, size: 44),
-                    const SizedBox(height: 10),
-                    const Center(child: CircularProgressIndicator()),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Next step: AI-generated cases will enable unlimited new training posts.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 14),
-                    FilledButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Later: AI will generate unlimited cases ✅'),
-                          ),
-                        );
-                      },
-                      child: const Text('About AI cases'),
-                    ),
-                  ],
-                ),
+          child: isLoadingInitial
+              ? const Center(child: CircularProgressIndicator())
+              : (_current == null
+              ? Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 12),
+              Text(
+                'Generating a new case…',
+                style: TextStyle(color: cs.onSurfaceVariant, fontWeight: FontWeight.w700),
               ),
-            ),
+            ],
           )
               : Column(
             children: [
+              // Case card
               CasePostCard(item: _current!),
               const SizedBox(height: 12),
 
@@ -259,12 +281,50 @@ class _CasesScreenState extends State<CasesScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Tip: check the source, domain, and emotional language.',
-                  style: TextStyle(color: cs.onSurfaceVariant),
+                const SizedBox(height: 10),
+
+                // Session streak shown here (not in top bar)
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: cs.primaryContainer,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        'Streak: ${appState.sessionStreak}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: cs.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Level ${progress.level} • XP ${progress.xp}',
+                        style: TextStyle(
+                          color: cs.onSurfaceVariant,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Stojche hint area
+                StojcheHintArea(
+                  mood: _stojcheMood,
+                  hintUsed: _hintUsed,
+                  hintText: _hintText,
+                  onAsk: _askStojche,
                 ),
               ] else ...[
+                // Feedback panel
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
@@ -311,9 +371,19 @@ class _CasesScreenState extends State<CasesScreen> {
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 12),
+
+                // After answering, keep Stojche visible with a mood (no hint bubble needed)
+                StojcheHintArea(
+                  mood: _stojcheMood,
+                  hintUsed: true,
+                  hintText: null,
+                  onAsk: () {},
+                ),
               ],
             ],
-          ),
+          )),
         ),
       ),
     );

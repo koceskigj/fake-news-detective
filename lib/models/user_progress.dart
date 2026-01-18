@@ -8,6 +8,7 @@ class UserProgress {
 
   int xp;
   int level;
+  int bestDailyStreak;
 
   int dailyStreak;
   DateTime? lastOpenDate;
@@ -28,6 +29,7 @@ class UserProgress {
     required this.userId,
     this.xp = 0,
     this.level = 1,
+    this.bestDailyStreak = 0,
     this.displayName = 'Guest Detective',
     this.avatarKey = 'monkey',
     this.dailyStreak = 0,
@@ -78,6 +80,7 @@ class UserProgress {
     'userId': userId,
     'xp': xp,
     'level': level,
+    'bestDailyStreak': bestDailyStreak,
     'displayName': displayName,
     'avatarKey': avatarKey,
     'dailyStreak': dailyStreak,
@@ -111,6 +114,7 @@ class UserProgress {
       userId: json['userId'] as String,
       xp: (json['xp'] as num?)?.toInt() ?? 0,
       level: (json['level'] as num?)?.toInt() ?? 1,
+      bestDailyStreak: (json['bestDailyStreak'] as num?)?.toInt() ?? 0,
       displayName: (json['displayName'] as String?) ?? 'Guest Detective',
       avatarKey: (json['avatarKey'] as String?) ?? 'monkey',
       dailyStreak: (json['dailyStreak'] as num?)?.toInt() ?? 0,

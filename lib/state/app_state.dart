@@ -96,6 +96,10 @@ class AppState {
       return;
     }
 
+    if (progress.dailyStreak > progress.bestDailyStreak) {
+      progress.bestDailyStreak = progress.dailyStreak;
+    }
+
     // Optional UX choice:
     // If you want session streak to reset each new day, uncomment this:
     // progress.sessionStreak = 0;

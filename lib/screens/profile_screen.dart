@@ -1,3 +1,4 @@
+import 'package:fake_news_detective/screens/stats_screen.dart';
 import 'package:flutter/material.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
@@ -294,6 +295,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Settings coming soon ✅')),
+                  );
+                },
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.bar_chart_outlined),
+                title: const Text('Stats'),
+                subtitle: const Text('All-time progress and records'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const StatsScreen()),
                   );
                 },
               ),

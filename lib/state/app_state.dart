@@ -1,3 +1,4 @@
+import 'package:fake_news_detective/models/case_item.dart';
 import 'package:flutter/foundation.dart';
 import '../data/achievements_catalog.dart';
 import '../models/achievement.dart';
@@ -106,6 +107,7 @@ class AppState {
   }
 
   Future<List<CelebrationEvent>> recordCaseSolved({
+    required CaseItem item,
     required String caseId,
     required AnswerChoice userChoice,
     required bool isCorrect,
@@ -127,8 +129,16 @@ class AppState {
         answeredAt: t,
         userChoice: userChoice,
         wasCorrect: isCorrect,
+        title: item.title,
+        snippet: item.snippet,
+        sourceName: item.sourceName,
+        isFake: item.isFake,
+        explanation: item.explanation,
+        difficulty: item.difficulty,
+        tags: item.tags,
       ),
     );
+
     if (progress.recentAnswers.length > maxRecentAnswers) {
       final extra = progress.recentAnswers.length - maxRecentAnswers;
       progress.recentAnswers.removeRange(0, extra);

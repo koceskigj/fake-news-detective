@@ -138,11 +138,13 @@ class _CasesScreenState extends State<CasesScreen> {
     final choiceEnum = pickedFake ? AnswerChoice.fake : AnswerChoice.real;
 
     final events = await appState.recordCaseSolved(
+      item: item,
       caseId: item.id,
       userChoice: choiceEnum,
       isCorrect: correct,
       difficulty: item.difficulty,
     );
+
 
     if (!mounted) return;
 
@@ -234,23 +236,6 @@ class _CasesScreenState extends State<CasesScreen> {
           )
               : Column(
             children: [
-              Row(
-                children: [
-                  Text(
-                    'New cases left: $unsolvedCount',
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: LinearProgressIndicator(
-                      value: _allCases.isEmpty ? 0 : (1 - (unsolvedCount / _allCases.length)),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
               CasePostCard(item: _current!),
               const SizedBox(height: 12),
 

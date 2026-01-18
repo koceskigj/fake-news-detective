@@ -1,49 +1,51 @@
 import 'package:flutter/material.dart';
-
 import '../models/answer_record.dart';
-import '../models/case_item.dart';
 import '../widgets/branded_app_bar.dart';
-import '../widgets/case_post_card.dart';
 
 class CaseReviewScreen extends StatelessWidget {
-  final CaseItem? caseItem; // may be null for future AI cases
   final AnswerRecord record;
 
-  const CaseReviewScreen({
-    super.key,
-    required this.caseItem,
-    required this.record,
-  });
+  const CaseReviewScreen({super.key, required this.record});
 
   String _choiceLabel(AnswerChoice c) => c == AnswerChoice.fake ? 'FAKE' : 'REAL';
 
   @override
   Widget build(BuildContext context) {
-    final item = caseItem;
-
-    final correctLabel = (item == null)
-        ? 'Unknown'
-        : (item.isFake ? 'FAKE' : 'REAL');
+    final correctLabel = record.isFake ? 'FAKE' : 'REAL';
 
     return Scaffold(
-      appBar: const BrandedAppBar(),
+      appBar: const BrandedAppBar(showDailyStreak: false),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          if (item != null) ...[
-            CasePostCard(item: item),
-            const SizedBox(height: 12),
-          ] else ...[
-            const Card(
-              child: ListTile(
-                leading: Icon(Icons.info_outline),
-                title: Text('This case is not available for full review yet.'),
-                subtitle: Text('Later, AI-generated cases will be stored for review.'),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    record.sourceName,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    record.title,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(record.snippet),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: record.tags.take(6).map((t) => Chip(label: Text(t))).toList(),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-          ],
-
+          ),
+          const SizedBox(height: 12),
           Card(
             child: ListTile(
               leading: Icon(record.wasCorrect ? Icons.check_circle_outline : Icons.error_outline),
@@ -51,7 +53,6 @@ class CaseReviewScreen extends StatelessWidget {
               subtitle: Text(_choiceLabel(record.userChoice)),
             ),
           ),
-
           Card(
             child: ListTile(
               leading: const Icon(Icons.verified_outlined),
@@ -59,15 +60,13 @@ class CaseReviewScreen extends StatelessWidget {
               subtitle: Text(correctLabel),
             ),
           ),
-
-          if (item != null)
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.info_outline),
-                title: const Text('Explanation'),
-                subtitle: Text(item.explanation),
-              ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: const Text('Explanation'),
+              subtitle: Text(record.explanation),
             ),
+          ),
         ],
       ),
     );

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../data/sample_cases.dart';
 import '../models/answer_record.dart';
-import '../models/case_item.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
 import 'case_review_screen.dart';
@@ -17,14 +15,6 @@ class CaseLibraryScreen extends StatefulWidget {
 class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
   bool _mistakesOnly = false;
 
-  CaseItem? _findCaseById(String id) {
-    try {
-      return sampleCases.firstWhere((c) => c.id == id);
-    } catch (_) {
-      return null; // later: AI cases might not be in sampleCases
-    }
-  }
-
   String _fmtDate(DateTime dt) {
     String two(int n) => n.toString().padLeft(2, '0');
     return '${dt.year}-${two(dt.month)}-${two(dt.day)} ${two(dt.hour)}:${two(dt.minute)}';
@@ -36,14 +26,14 @@ class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
     final progress = appState.progress;
 
     // newest first
-    final records = progress.recentAnswers.reversed.toList();
+    final List<AnswerRecord> records = progress.recentAnswers.reversed.toList();
 
-    final visible = _mistakesOnly
+    final List<AnswerRecord> visible = _mistakesOnly
         ? records.where((r) => !r.wasCorrect).toList()
         : records;
 
     return Scaffold(
-      appBar: const BrandedAppBar(),
+      appBar: const BrandedAppBar(showDailyStreak: false),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -79,33 +69,32 @@ class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, i) {
                   final r = visible[i];
-                  final item = _findCaseById(r.caseId);
-
-                  final title = item?.title ?? 'Case ${r.caseId}';
-                  final source = item?.sourceName ?? 'Unknown source';
 
                   final leadingIcon = r.wasCorrect
                       ? Icons.check_circle_outline
                       : Icons.error_outline;
 
+                  final answerText = r.userChoice == AnswerChoice.fake ? 'FAKE' : 'REAL';
+
                   return Card(
                     child: ListTile(
                       leading: Icon(leadingIcon),
                       title: Text(
-                        title,
+                        r.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      subtitle: Text('$source • ${_fmtDate(r.answeredAt)}'),
+                      subtitle: Text(
+                        '${r.sourceName} • $answerText • ${_fmtDate(r.answeredAt)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => CaseReviewScreen(
-                              caseItem: item,
-                              record: r,
-                            ),
+                            builder: (_) => CaseReviewScreen(record: r),
                           ),
                         );
                       },

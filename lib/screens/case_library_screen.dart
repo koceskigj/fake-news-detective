@@ -28,9 +28,8 @@ class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
     // newest first
     final List<AnswerRecord> records = progress.recentAnswers.reversed.toList();
 
-    final List<AnswerRecord> visible = _mistakesOnly
-        ? records.where((r) => !r.wasCorrect).toList()
-        : records;
+    final List<AnswerRecord> visible =
+    _mistakesOnly ? records.where((r) => !r.wasCorrect).toList() : records;
 
     return Scaffold(
       appBar: const BrandedAppBar(showDailyStreak: false),
@@ -40,12 +39,10 @@ class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
           children: [
             Row(
               children: [
-                Expanded(
+                const Expanded(
                   child: Text(
-                    _mistakesOnly
-                        ? 'Mistakes (last ${progress.recentAnswers.length})'
-                        : 'Recent cases (last ${progress.recentAnswers.length})',
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+                    'Recent cases',
+                    style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
                 FilterChip(
@@ -70,34 +67,56 @@ class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
                 itemBuilder: (context, i) {
                   final r = visible[i];
 
+                  const correctBg = Color(0xFFE6F4EA);
+                  const correctFg = Color(0xFF1E7F43);
+
+                  const wrongBg = Color(0xFFFDEAEA);
+                  const wrongFg = Color(0xFFB3261E);
+
+                  final bgColor = r.wasCorrect ? correctBg : wrongBg;
+                  final fgColor = r.wasCorrect ? correctFg : wrongFg;
+
                   final leadingIcon = r.wasCorrect
                       ? Icons.check_circle_outline
                       : Icons.error_outline;
 
-                  final answerText = r.userChoice == AnswerChoice.fake ? 'FAKE' : 'REAL';
+                  final answerText =
+                  r.userChoice == AnswerChoice.fake ? 'FAKE' : 'REAL';
 
                   return Card(
-                    child: ListTile(
-                      leading: Icon(leadingIcon),
-                      title: Text(
-                        r.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Text(
-                        '${r.sourceName} • $answerText • ${_fmtDate(r.answeredAt)}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => CaseReviewScreen(record: r),
+                    clipBehavior: Clip.antiAlias,
+                    child: Container(
+                      color: bgColor,
+                      child: ListTile(
+                        leading: Icon(leadingIcon, color: fgColor),
+                        title: Text(
+                          r.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: fgColor,
+                            fontWeight: FontWeight.w800,
                           ),
-                        );
-                      },
+                        ),
+                        subtitle: Text(
+                          '${r.sourceName} • $answerText • ${_fmtDate(r.answeredAt)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: fgColor.withOpacity(0.9),
+                          ),
+                        ),
+                        trailing:
+                        Icon(Icons.chevron_right, color: fgColor),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CaseReviewScreen(record: r),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   );
                 },

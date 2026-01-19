@@ -191,6 +191,7 @@ class _CasesScreenState extends State<CasesScreen> {
       isCorrect: correct,
       difficulty: item.difficulty,
       item: item,
+      usedHint: _hintUsed,
     );
 
     if (!mounted) return;

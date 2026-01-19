@@ -116,6 +116,7 @@ class AppState {
     required AnswerChoice userChoice,
     required bool isCorrect,
     required int difficulty,
+    required bool usedHint,
     DateTime? now,
   }) async {
     final t = now ?? DateTime.now();
@@ -157,7 +158,15 @@ class AppState {
         progress.bestPerfectStreak = progress.sessionStreak;
       }
 
-      progress.awardXp(xpForDifficulty(difficulty));
+      var xpGain = xpForDifficulty(difficulty);
+
+      if (usedHint) {
+        xpGain = (xpGain / 3).round();
+        if (xpGain < 1) xpGain = 1;
+      }
+
+      progress.awardXp(xpGain);
+
     } else {
       // reset persisted streak
       progress.sessionStreak = 0;

@@ -9,6 +9,7 @@ import '../services/local_storage.dart';
 import '../repositories/case_repository.dart';
 import '../repositories/sample_case_repository.dart';
 import '../repositories/hybrid_case_repository.dart';
+import '../repositories/leaderboard_repository.dart';
 
 
 
@@ -16,6 +17,8 @@ class AppState {
   final UserProgress progress;
 
   final CaseRepository caseRepository;
+
+  final LeaderboardRepository _leaderboardRepo = LeaderboardRepository();
 
   CelebrationEvent? _pendingDailyStreakEvent;
 
@@ -50,8 +53,9 @@ class AppState {
   Future<void> _save() async {
     try {
       await LocalStorage.saveProgressJson(progress.toJson());
+      await _leaderboardRepo.upsertFromProgress(progress);
     } catch (e) {
-      if (kDebugMode) debugPrint('Save failed: $e');
+      if (kDebugMode) debugPrint('Save/sync failed: $e');
     }
   }
 
@@ -152,7 +156,6 @@ class AppState {
     if (isCorrect) {
       progress.correctAnswersTotal += 1;
 
-      // ✅ persisted session streak
       progress.sessionStreak += 1;
       if (progress.sessionStreak > progress.bestPerfectStreak) {
         progress.bestPerfectStreak = progress.sessionStreak;

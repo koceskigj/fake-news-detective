@@ -1,10 +1,9 @@
-
 import 'package:flutter/material.dart';
-
 import '../data/achievements_catalog.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
 import 'achievement_detail_screen.dart';
+import 'leaderboard_screen.dart';
 
 class RewardsScreen extends StatefulWidget {
   const RewardsScreen({super.key});
@@ -36,10 +35,11 @@ class _RewardsScreenState extends State<RewardsScreen> {
                 leading: const Icon(Icons.bolt),
                 title: Text('Level ${progress.level}'),
                 subtitle: Text('XP: ${progress.xp}'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                trailing: const Icon(Icons.leaderboard_outlined),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Leaderboard will be added later ✅')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
                   );
                 },
               ),

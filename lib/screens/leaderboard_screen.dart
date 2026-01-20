@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../dev/leaderboard_seed.dart';
 import '../models/leaderboard_entry.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
@@ -29,14 +31,13 @@ class LeaderboardScreen extends StatelessWidget {
 
   Future<int?> _loadMyRank(LeaderboardEntry me) async {
     // Rank by XP only: rank = count(xp > myXp) + 1
-    // This is exact for that definition (ties share the same rank bucket).
     final q = _col.where('xp', isGreaterThan: me.xp);
 
-    // Firestore aggregate count (fast, doesn't download docs)
+    // Firestore aggregate count
     final agg = await q.count().get();
     final above = agg.count ?? 0;
-    return above + 1;
 
+    return above + 1;
   }
 
   @override
@@ -57,7 +58,38 @@ class LeaderboardScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
+
+            if (kDebugMode) ...[
+              Row(
+                children: [
+                  FilledButton.tonal(
+                    onPressed: () async {
+                      await LeaderboardSeeder().seed(count: 25);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Seeded demo users ✅')),
+                        );
+                      }
+                    },
+                    child: const Text('Seed demo'),
+                  ),
+                  const SizedBox(width: 10),
+                  TextButton(
+                    onPressed: () async {
+                      await LeaderboardSeeder().clearDemo();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Cleared demo users ✅')),
+                        );
+                      }
+                    },
+                    child: const Text('Clear demo'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
 
             Expanded(
               child: StreamBuilder<List<LeaderboardEntry>>(
@@ -68,6 +100,10 @@ class LeaderboardScreen extends StatelessWidget {
                   }
 
                   final top = topSnap.data!;
+                  if (top.isEmpty) {
+                    return const Center(child: Text('No leaderboard entries yet.'));
+                  }
+
                   final inTop20 = top.any((e) => e.userId == myId);
 
                   return FutureBuilder<LeaderboardEntry?>(
@@ -77,7 +113,7 @@ class LeaderboardScreen extends StatelessWidget {
 
                       return ListView(
                         children: [
-                          // --- Top 20 list ---
+                          // --- Top 20 ---
                           ...List.generate(top.length, (i) {
                             final e = top[i];
                             final isMe = e.userId == myId;
@@ -85,12 +121,11 @@ class LeaderboardScreen extends StatelessWidget {
                             return _LeaderboardRow(
                               rankText: '#${i + 1}',
                               entry: e,
-                              highlight: isMe, // highlight only if you are actually in top 20
-                              showYouTag: isMe,
+                              highlight: isMe,
                             );
                           }),
 
-                          // --- If you're not in top 20, show divider + your rank ---
+                          // --- If not in top 20: dots + your rank row ---
                           if (!inTop20) ...[
                             const SizedBox(height: 10),
                             const _DotsDivider(),
@@ -108,22 +143,24 @@ class LeaderboardScreen extends StatelessWidget {
                               FutureBuilder<int?>(
                                 future: _loadMyRank(me),
                                 builder: (context, rankSnap) {
-                                  final rank = rankSnap.data;
-
                                   if (!rankSnap.hasData) {
                                     return const Card(
                                       child: ListTile(
-                                        leading: CircularProgressIndicator(),
+                                        leading: SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        ),
                                         title: Text('Loading your rank…'),
                                       ),
                                     );
                                   }
 
+                                  final rank = rankSnap.data!;
                                   return _LeaderboardRow(
                                     rankText: '#$rank',
                                     entry: me,
-                                    highlight: true, // highlight you
-                                    showYouTag: true,
+                                    highlight: true,
                                   );
                                 },
                               ),
@@ -166,13 +203,11 @@ class _LeaderboardRow extends StatelessWidget {
   final String rankText;
   final LeaderboardEntry entry;
   final bool highlight;
-  final bool showYouTag;
 
   const _LeaderboardRow({
     required this.rankText,
     required this.entry,
     required this.highlight,
-    required this.showYouTag,
   });
 
   @override
@@ -195,19 +230,13 @@ class _LeaderboardRow extends StatelessWidget {
             ),
           ),
         ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                entry.displayName,
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: fg,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+        title: Text(
+          entry.displayName,
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: fg,
+          ),
+          overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
           'XP ${entry.xp} • Level ${entry.level} • Best daily ${entry.bestDailyStreak} • Best streak ${entry.bestPerfectStreak}',

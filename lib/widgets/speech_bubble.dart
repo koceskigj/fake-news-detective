@@ -2,12 +2,22 @@ import 'package:flutter/material.dart';
 
 class SpeechBubble extends StatelessWidget {
   final String text;
+  final Color? backgroundColor;
+  final Color? textColor;
 
-  const SpeechBubble({super.key, required this.text});
+  const SpeechBubble({
+    super.key,
+    required this.text,
+    this.backgroundColor,
+    this.textColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+
+    final bg = backgroundColor ?? cs.secondaryContainer;
+    final fg = textColor ?? cs.onSecondaryContainer;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -15,13 +25,13 @@ class SpeechBubble extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: cs.secondaryContainer,
+            color: bg,
             borderRadius: BorderRadius.circular(14),
           ),
           child: Text(
             text,
             style: TextStyle(
-              color: cs.onSecondaryContainer,
+              color: fg,
               height: 1.25,
               fontWeight: FontWeight.w600,
             ),
@@ -36,7 +46,7 @@ class SpeechBubble extends StatelessWidget {
               width: 16,
               height: 16,
               decoration: BoxDecoration(
-                color: cs.secondaryContainer,
+                color: bg,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),

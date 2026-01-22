@@ -32,7 +32,7 @@ class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
     _mistakesOnly ? records.where((r) => !r.wasCorrect).toList() : records;
 
     return Scaffold(
-      appBar: const BrandedAppBar(showDailyStreak: false),
+      appBar: const BrandedAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

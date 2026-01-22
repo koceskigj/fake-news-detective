@@ -264,8 +264,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 _StatChip(label: 'Level', value: '${p.level}'),
                 _StatChip(label: 'XP', value: '${p.xp}'),
-                _StatChip(label: 'Daily 🔥', value: '${p.dailyStreak}'),
-                _StatChip(label: 'Session 🔥', value: '${p.sessionStreak}'),
               ],
             ),
 

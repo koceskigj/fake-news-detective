@@ -264,7 +264,7 @@ class _CasesScreenState extends State<CasesScreen> {
               Text('Generating a new case…'),
             ],
           )
-              : Column(
+              : ListView(
             children: [
               CasePostCard(item: _current!),
               const SizedBox(height: 12),

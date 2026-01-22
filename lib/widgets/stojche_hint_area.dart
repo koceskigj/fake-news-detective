@@ -17,17 +17,17 @@ class StojcheHintArea extends StatelessWidget {
     required this.onAsk,
   });
 
-  IconData _iconForMood(StojcheMood mood) {
+  String _assetForMood(StojcheMood mood) {
     switch (mood) {
       case StojcheMood.talking:
-        return Icons.record_voice_over_outlined;
+        return 'assets/stojche/stojche_talking.png';
       case StojcheMood.celebrate:
-        return Icons.celebration_outlined;
+        return 'assets/stojche/stojche_correct.png';
       case StojcheMood.wise:
-        return Icons.psychology_outlined;
+        return 'assets/stojche/stojche_wrong.png';
       case StojcheMood.idle:
       default:
-        return Icons.emoji_nature;
+        return 'assets/stojche/stojche_idle.png';
     }
   }
 
@@ -36,36 +36,42 @@ class StojcheHintArea extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Opacity(
-          opacity: 0.35,
-          child: Container(
-            width: 78,
-            height: 92,
-            decoration: BoxDecoration(
-              color: cs.primaryContainer,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(
-              _iconForMood(mood),
-              size: 44,
-              color: cs.onPrimaryContainer,
-            ),
+        // --- Stojche (bigger, recognizable) ---
+        SizedBox(
+          width: 175,
+          height: 200,
+          child: Image.asset(
+            _assetForMood(mood),
+            fit: BoxFit.contain,
           ),
         ),
+
         const SizedBox(width: 12),
+
+        // --- Right side: button or speech bubble ---
         Expanded(
           child: hintText == null
               ? Align(
-            alignment: Alignment.bottomLeft,
+            alignment: Alignment.centerLeft,
             child: FilledButton.tonalIcon(
               onPressed: hintUsed ? null : onAsk,
               icon: const Icon(Icons.question_answer_outlined),
               label: const Text('Ask Stojche'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
             ),
           )
-              : SpeechBubble(text: hintText!),
+              : SpeechBubble(
+            text: hintText!,
+            backgroundColor: cs.secondaryContainer,
+            textColor: cs.onSecondaryContainer,
+          ),
         ),
       ],
     );

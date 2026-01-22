@@ -21,13 +21,26 @@ class CasesScreen extends StatefulWidget {
 }
 
 class _CasesScreenState extends State<CasesScreen> {
-  // --- Colors (shared with Case Library) ---
   static const Color _correctBg = Color(0xFFE6F4EA);
   static const Color _correctFg = Color(0xFF1E7F43);
   static const Color _wrongBg = Color(0xFFFDEAEA);
   static const Color _wrongFg = Color(0xFFB3261E);
 
-  // --- Case handling ---
+  final List<String> _recentTitles = [];
+  static const int _recentTitleLimit = 10;
+
+  bool _wasRecentlyShown(CaseItem item) {
+    final t = item.title.trim().toLowerCase();
+    return t.isNotEmpty && _recentTitles.contains(t);
+  }
+
+  void _rememberShown(CaseItem item) {
+    final t = item.title.trim().toLowerCase();
+    if (t.isEmpty) return;
+    _recentTitles.add(t);
+    if (_recentTitles.length > _recentTitleLimit) _recentTitles.removeAt(0);
+  }
+
   List<CaseItem> _allCases = [];
   CaseItem? _current;
 
@@ -37,10 +50,11 @@ class _CasesScreenState extends State<CasesScreen> {
   final List<CelebrationEvent> _pendingCelebrations = [];
   bool _loadedOnce = false;
 
-  // --- Stojche / hint state ---
   StojcheMood _stojcheMood = StojcheMood.idle;
   bool _hintUsed = false;
   String? _hintText;
+
+  bool _answerSubmitting = false;
 
   @override
   void didChangeDependencies() {
@@ -53,15 +67,11 @@ class _CasesScreenState extends State<CasesScreen> {
 
   Future<void> _loadCases() async {
     final appState = AppStateScope.of(context);
-
     final loaded = await appState.caseRepository.loadInitialCases();
     loaded.shuffle(Random());
 
     if (!mounted) return;
-
-    setState(() {
-      _allCases = loaded;
-    });
+    setState(() => _allCases = loaded);
 
     await _ensureCurrentCase();
   }
@@ -94,7 +104,6 @@ class _CasesScreenState extends State<CasesScreen> {
         return list.first;
       }
     }
-
     return null;
   }
 
@@ -105,21 +114,27 @@ class _CasesScreenState extends State<CasesScreen> {
     final progress = appState.progress;
 
     final unsolved = _unsolvedCases(progress.solvedCaseIds);
-
     CaseItem? nextItem;
 
     if (unsolved.isNotEmpty) {
       final target = appState.targetDifficultyFromStreak();
-      nextItem = _pickNextCase(
-        unsolved: unsolved,
-        targetDifficulty: target,
-      );
+      nextItem = _pickNextCase(unsolved: unsolved, targetDifficulty: target);
     } else {
       final target = appState.targetDifficultyFromStreak();
       nextItem = await appState.caseRepository.generateCase(
         progress: progress,
         targetDifficulty: target,
       );
+
+      // Reduce retries to 1 -> avoids long delays
+      int tries = 0;
+      while (nextItem != null && _wasRecentlyShown(nextItem) && tries < 1) {
+        tries++;
+        nextItem = await appState.caseRepository.generateCase(
+          progress: progress,
+          targetDifficulty: target,
+        );
+      }
     }
 
     if (!mounted) return;
@@ -132,6 +147,8 @@ class _CasesScreenState extends State<CasesScreen> {
       _stojcheMood = StojcheMood.idle;
       _hintUsed = false;
       _hintText = null;
+
+      if (nextItem != null) _rememberShown(nextItem);
     });
   }
 
@@ -142,38 +159,26 @@ class _CasesScreenState extends State<CasesScreen> {
     if (tags.contains('clickbait') || tags.contains('sharebait')) {
       reason =
       'This feels like clickbait. The wording is emotional and tries to force a reaction.';
-    } else if (tags.contains('missing-source') ||
-        tags.contains('vague-evidence')) {
-      reason =
-      'I don’t see a clear source. “Experts say” without names is suspicious.';
-    } else if (tags.contains('fearbait') ||
-        tags.contains('urgent-language')) {
-      reason =
-      'It uses fear or urgency to push you to act fast. Real info is usually calmer.';
-    } else if (tags.contains('context-missing') ||
-        tags.contains('cropped-clip')) {
-      reason =
-      'This might be missing context. Short clips or screenshots can mislead.';
-    } else if (tags.contains('absurd-claim') ||
-        tags.contains('too-good-to-be-true')) {
-      reason =
-      'It sounds too good to be true. Extraordinary claims need strong evidence.';
+    } else if (tags.contains('missing-source') || tags.contains('vague-evidence')) {
+      reason = 'I don’t see a clear source. “Experts say” without names is suspicious.';
+    } else if (tags.contains('fearbait') || tags.contains('urgent-language')) {
+      reason = 'It uses fear or urgency to push you to act fast. Real info is usually calmer.';
+    } else if (tags.contains('context-missing') || tags.contains('cropped-clip')) {
+      reason = 'This might be missing context. Short clips or screenshots can mislead.';
+    } else if (tags.contains('absurd-claim') || tags.contains('too-good-to-be-true')) {
+      reason = 'It sounds too good to be true. Extraordinary claims need strong evidence.';
     } else if (!item.isFake) {
-      reason =
-      'This sounds specific and practical, which often points to real information.';
+      reason = 'This sounds specific and practical, which often points to real information.';
     } else {
       reason = 'Something feels off: vague details and no easy way to verify.';
     }
 
-    final leaning =
-    item.isFake ? 'I’m leaning towards FAKE.' : 'I’m leaning towards REAL.';
-
+    final leaning = item.isFake ? 'I’m leaning towards FAKE.' : 'I’m leaning towards REAL.';
     return '$reason\n\n$leaning';
   }
 
   void _askStojche() {
     if (_current == null || _hintUsed || _choice != null) return;
-
     setState(() {
       _hintUsed = true;
       _stojcheMood = StojcheMood.talking;
@@ -183,35 +188,40 @@ class _CasesScreenState extends State<CasesScreen> {
 
   Future<void> _answer(UserChoice choice) async {
     if (_choice != null || _current == null) return;
+    if (_answerSubmitting) return;
 
-    final item = _current!;
-    final pickedFake = (choice == UserChoice.fake);
-    final correct = pickedFake == item.isFake;
+    setState(() => _answerSubmitting = true);
 
-    final appState = AppStateScope.of(context);
-    final choiceEnum =
-    pickedFake ? AnswerChoice.fake : AnswerChoice.real;
+    try {
+      final item = _current!;
+      final pickedFake = (choice == UserChoice.fake);
+      final correct = pickedFake == item.isFake;
 
-    final mood =
-    correct ? StojcheMood.celebrate : StojcheMood.wise;
+      final appState = AppStateScope.of(context);
+      final choiceEnum = pickedFake ? AnswerChoice.fake : AnswerChoice.real;
 
-    final events = await appState.recordCaseSolved(
-      caseId: item.id,
-      userChoice: choiceEnum,
-      isCorrect: correct,
-      difficulty: item.difficulty,
-      usedHint: _hintUsed,
-      item: item,
-    );
+      final mood = correct ? StojcheMood.celebrate : StojcheMood.wise;
 
-    if (!mounted) return;
+      final events = await appState.recordCaseSolved(
+        caseId: item.id,
+        userChoice: choiceEnum,
+        isCorrect: correct,
+        difficulty: item.difficulty,
+        usedHint: _hintUsed,
+        item: item,
+      );
 
-    setState(() {
-      _choice = choice;
-      _isCorrect = correct;
-      _pendingCelebrations.addAll(events);
-      _stojcheMood = mood;
-    });
+      if (!mounted) return;
+
+      setState(() {
+        _choice = choice;
+        _isCorrect = correct;
+        _pendingCelebrations.addAll(events);
+        _stojcheMood = mood;
+      });
+    } finally {
+      if (mounted) setState(() => _answerSubmitting = false);
+    }
   }
 
   Future<void> _showCelebrationsIfAny() async {
@@ -228,9 +238,7 @@ class _CasesScreenState extends State<CasesScreen> {
   }
 
   Future<void> _next() async {
-    if (_pendingCelebrations.isNotEmpty) {
-      await _showCelebrationsIfAny();
-    }
+    if (_pendingCelebrations.isNotEmpty) await _showCelebrationsIfAny();
     if (!mounted) return;
     await _ensureCurrentCase();
   }
@@ -238,10 +246,7 @@ class _CasesScreenState extends State<CasesScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = AppStateScope.of(context);
-    final cs = Theme.of(context).colorScheme;
-
-    final isLoadingInitial =
-        _loadedOnce && _allCases.isEmpty && _current == null;
+    final isLoadingInitial = _loadedOnce && _allCases.isEmpty && _current == null;
 
     return Scaffold(
       appBar: const BrandedAppBar(),
@@ -269,28 +274,24 @@ class _CasesScreenState extends State<CasesScreen> {
                   children: [
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: () =>
-                            _answer(UserChoice.real),
+                        onPressed: _answerSubmitting ? null : () => _answer(UserChoice.real),
                         style: FilledButton.styleFrom(
                           backgroundColor: _correctBg,
                           foregroundColor: _correctFg,
                         ),
-                        icon: const Icon(
-                            Icons.verified_outlined),
+                        icon: const Icon(Icons.verified_outlined),
                         label: const Text('REAL'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: () =>
-                            _answer(UserChoice.fake),
+                        onPressed: _answerSubmitting ? null : () => _answer(UserChoice.fake),
                         style: FilledButton.styleFrom(
                           backgroundColor: _wrongBg,
                           foregroundColor: _wrongFg,
                         ),
-                        icon: const Icon(
-                            Icons.report_gmailerrorred_outlined),
+                        icon: const Icon(Icons.report_gmailerrorred_outlined),
                         label: const Text('FAKE'),
                       ),
                     ),
@@ -328,44 +329,32 @@ class _CasesScreenState extends State<CasesScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: (_isCorrect ?? false)
-                        ? _correctBg
-                        : _wrongBg,
-                    borderRadius:
-                    BorderRadius.circular(12),
+                    color: (_isCorrect ?? false) ? _correctBg : _wrongBg,
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        (_isCorrect ?? false)
-                            ? 'Correct ✅'
-                            : 'Not quite ❌',
+                        (_isCorrect ?? false) ? 'Correct ✅' : 'Not quite ❌',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
-                          color: (_isCorrect ?? false)
-                              ? _correctFg
-                              : _wrongFg,
+                          color: (_isCorrect ?? false) ? _correctFg : _wrongFg,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _current!.explanation,
                         style: TextStyle(
-                          color: (_isCorrect ?? false)
-                              ? _correctFg
-                              : _wrongFg,
+                          color: (_isCorrect ?? false) ? _correctFg : _wrongFg,
                         ),
                       ),
                       const SizedBox(height: 12),
                       FilledButton(
                         onPressed: _next,
                         child: Text(
-                          _pendingCelebrations.isNotEmpty
-                              ? 'Claim rewards'
-                              : 'Next case',
+                          _pendingCelebrations.isNotEmpty ? 'Claim rewards' : 'Next case',
                         ),
                       ),
                     ],

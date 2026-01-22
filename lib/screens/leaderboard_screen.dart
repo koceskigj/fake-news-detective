@@ -24,17 +24,15 @@ class LeaderboardScreen extends StatelessWidget {
   }
 
   Future<LeaderboardEntry?> _loadMe(String myId) async {
-    final doc = await _col.doc(myId).get();
+    final doc = await _col.doc(myId).get().timeout(const Duration(seconds: 6));
     if (!doc.exists) return null;
     return LeaderboardEntry.fromMap(doc.id, doc.data()!);
   }
 
   Future<int?> _loadMyRank(LeaderboardEntry me) async {
-    // Rank by XP only: rank = count(xp > myXp) + 1
     final q = _col.where('xp', isGreaterThan: me.xp);
 
-    // Firestore aggregate count
-    final agg = await q.count().get();
+    final agg = await q.count().get().timeout(const Duration(seconds: 6));
     final above = agg.count ?? 0;
 
     return above + 1;
@@ -95,6 +93,11 @@ class LeaderboardScreen extends StatelessWidget {
               child: StreamBuilder<List<LeaderboardEntry>>(
                 stream: _top20Stream(),
                 builder: (context, topSnap) {
+                  if (topSnap.hasError) {
+                    return Center(
+                      child: Text('Leaderboard error: ${topSnap.error}'),
+                    );
+                  }
                   if (!topSnap.hasData) {
                     return const Center(child: CircularProgressIndicator());
                   }
@@ -113,7 +116,6 @@ class LeaderboardScreen extends StatelessWidget {
 
                       return ListView(
                         children: [
-                          // --- Top 20 ---
                           ...List.generate(top.length, (i) {
                             final e = top[i];
                             final isMe = e.userId == myId;
@@ -125,13 +127,20 @@ class LeaderboardScreen extends StatelessWidget {
                             );
                           }),
 
-                          // --- If not in top 20: dots + your rank row ---
                           if (!inTop20) ...[
                             const SizedBox(height: 10),
                             const _DotsDivider(),
                             const SizedBox(height: 10),
 
-                            if (me == null)
+                            if (meSnap.hasError)
+                              const Card(
+                                child: ListTile(
+                                  leading: Icon(Icons.info_outline),
+                                  title: Text('Could not load your entry'),
+                                  subtitle: Text('Try again later.'),
+                                ),
+                              )
+                            else if (me == null)
                               const Card(
                                 child: ListTile(
                                   leading: Icon(Icons.info_outline),
@@ -143,6 +152,16 @@ class LeaderboardScreen extends StatelessWidget {
                               FutureBuilder<int?>(
                                 future: _loadMyRank(me),
                                 builder: (context, rankSnap) {
+                                  if (rankSnap.hasError) {
+                                    return const Card(
+                                      child: ListTile(
+                                        leading: Icon(Icons.info_outline),
+                                        title: Text('Rank unavailable right now'),
+                                        subtitle: Text('Try again later.'),
+                                      ),
+                                    );
+                                  }
+
                                   if (!rankSnap.hasData) {
                                     return const Card(
                                       child: ListTile(
@@ -213,7 +232,6 @@ class _LeaderboardRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
     final bg = highlight ? cs.primaryContainer : null;
     final fg = highlight ? cs.onPrimaryContainer : null;
 

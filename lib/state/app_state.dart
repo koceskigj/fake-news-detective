@@ -1,17 +1,15 @@
-import 'package:fake_news_detective/models/case_item.dart';
 import 'package:flutter/foundation.dart';
+
 import '../data/achievements_catalog.dart';
 import '../models/achievement.dart';
 import '../models/answer_record.dart';
+import '../models/case_item.dart';
 import '../models/celebration_event.dart';
 import '../models/user_progress.dart';
-import '../services/local_storage.dart';
 import '../repositories/case_repository.dart';
-import '../repositories/sample_case_repository.dart';
 import '../repositories/hybrid_case_repository.dart';
 import '../repositories/leaderboard_repository.dart';
-
-
+import '../services/local_storage.dart';
 
 class AppState {
   final UserProgress progress;
@@ -29,8 +27,6 @@ class AppState {
     CaseRepository? caseRepository,
   }) : caseRepository = caseRepository ?? HybridCaseRepository();
 
-
-  /// ✅ Persisted session streak (consecutive correct answers)
   int get sessionStreak => progress.sessionStreak;
 
   int targetDifficultyFromStreak() {
@@ -52,11 +48,28 @@ class AppState {
 
   Future<void> _save() async {
     try {
+      // Local save (fast)
       await LocalStorage.saveProgressJson(progress.toJson());
-      await _leaderboardRepo.upsertFromProgress(progress);
+
+      // Firestore sync (do NOT block UI)
+      _leaderboardRepo.upsertFromProgress(progress).catchError((_) {});
     } catch (e) {
-      if (kDebugMode) debugPrint('Save/sync failed: $e');
+      if (kDebugMode) debugPrint('Save failed: $e');
     }
+  }
+
+  // ✅ Needed for Profile screen
+  Future<void> setDisplayName(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    progress.displayName = trimmed;
+    await _save();
+  }
+
+  // ✅ Needed for Profile screen
+  Future<void> setAvatarKey(String key) async {
+    progress.avatarKey = key;
+    await _save();
   }
 
   String _dateKey(DateTime dt) {
@@ -76,13 +89,17 @@ class AppState {
     final last = progress.lastOpenDate;
     progress.lastOpenDate = t;
 
+    // First ever open
     if (last == null) {
       if (progress.dailyStreak == 0) progress.dailyStreak = 1;
+      if (progress.dailyStreak > progress.bestDailyStreak) {
+        progress.bestDailyStreak = progress.dailyStreak;
+      }
       await _save();
       return;
     }
 
-    // Same calendar day: just save last open time
+    // Same calendar day
     if (_dateKey(last) == _dateKey(t)) {
       await _save();
       return;
@@ -95,7 +112,7 @@ class AppState {
     } else if (diffDays > 1) {
       progress.dailyStreak = 1;
     } else {
-      // device time went backwards; ignore
+      // clock moved backwards, ignore
       await _save();
       return;
     }
@@ -104,10 +121,6 @@ class AppState {
       progress.bestDailyStreak = progress.dailyStreak;
     }
 
-    // Optional UX choice:
-    // If you want session streak to reset each new day, uncomment this:
-    // progress.sessionStreak = 0;
-
     _pendingDailyStreakEvent =
         CelebrationEvent.dailyStreakUpdated(progress.dailyStreak);
 
@@ -115,23 +128,23 @@ class AppState {
   }
 
   Future<List<CelebrationEvent>> recordCaseSolved({
-    required CaseItem item,
     required String caseId,
     required AnswerChoice userChoice,
     required bool isCorrect,
     required int difficulty,
     required bool usedHint,
+    required CaseItem item,
     DateTime? now,
   }) async {
-    final t = now ?? DateTime.now();
+    final DateTime t = now ?? DateTime.now();
     final events = <CelebrationEvent>[];
     final oldLevel = progress.level;
 
-    // Prevent repeats for built-in dataset
+    // Prevent repeats for built-in pool (fine)
     final wasNew = progress.solvedCaseIds.add(caseId);
     if (wasNew) progress.casesSolvedTotal += 1;
 
-    // Record bounded answer history
+    // Snapshot answer record (works for AI/generated too)
     progress.recentAnswers.add(
       AnswerRecord(
         caseId: caseId,
@@ -161,7 +174,7 @@ class AppState {
         progress.bestPerfectStreak = progress.sessionStreak;
       }
 
-      var xpGain = xpForDifficulty(difficulty);
+      int xpGain = xpForDifficulty(difficulty);
 
       if (usedHint) {
         xpGain = (xpGain / 3).round();
@@ -169,9 +182,7 @@ class AppState {
       }
 
       progress.awardXp(xpGain);
-
     } else {
-      // reset persisted streak
       progress.sessionStreak = 0;
     }
 
@@ -185,7 +196,6 @@ class AppState {
       events.add(CelebrationEvent.levelUp(oldLevel, newLevel));
     }
 
-    // Inject daily streak celebration after first solved case of the day
     if (_pendingDailyStreakEvent != null) {
       events.insert(0, _pendingDailyStreakEvent!);
       _pendingDailyStreakEvent = null;
@@ -193,12 +203,6 @@ class AppState {
 
     await _save();
     return events;
-  }
-
-  Future<void> addXp(int amount, {DateTime? now}) async {
-    progress.awardXp(amount);
-    _evaluateAndUnlockAchievements(now ?? DateTime.now());
-    await _save();
   }
 
   int _valueForCriteria(AchievementCriteria c) {
@@ -234,21 +238,18 @@ class AppState {
   }
 
   Future<void> resetProgress() async {
-    // Clear persisted storage
     await LocalStorage.clearAll();
 
-    // Reset in-memory progress fields
     progress.xp = 0;
     progress.level = 1;
 
     progress.dailyStreak = 0;
+    progress.bestDailyStreak = 0;
     progress.lastOpenDate = null;
 
     progress.casesSolvedTotal = 0;
     progress.correctAnswersTotal = 0;
     progress.bestPerfectStreak = 0;
-
-    // Persisted session streak (🔥)
     progress.sessionStreak = 0;
 
     progress.solvedCaseIds.clear();
@@ -256,25 +257,9 @@ class AppState {
     progress.achievementUnlockedAt.clear();
     progress.recentAnswers.clear();
 
-    // Clear pending daily streak celebration
     _pendingDailyStreakEvent = null;
 
-    // Save clean state so next launch is clean too
     await LocalStorage.saveProgressJson(progress.toJson());
+    _leaderboardRepo.upsertFromProgress(progress).catchError((_) {});
   }
-
-  Future<void> setDisplayName(String name) async {
-    final trimmed = name.trim();
-    if (trimmed.isEmpty) return;
-    progress.displayName = trimmed;
-    await LocalStorage.saveProgressJson(progress.toJson());
-  }
-
-  Future<void> setAvatarKey(String key) async {
-    progress.avatarKey = key;
-    await LocalStorage.saveProgressJson(progress.toJson());
-  }
-
-
-
 }

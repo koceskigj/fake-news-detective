@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
+
 import '../theme/app_theme.dart';
 import 'home_shell.dart';
 import '../models/user_progress.dart';
@@ -17,8 +19,9 @@ class FakeNewsDetectiveApp extends StatelessWidget {
       return AppState(progress: progress);
     }
 
-    // First run:
-    final progress = UserProgress(userId: 'local-user');
+    final newId = const Uuid().v4();
+    final progress = UserProgress(userId: newId);
+
     return AppState(progress: progress);
   }
 

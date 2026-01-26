@@ -229,6 +229,30 @@ class _LeaderboardRow extends StatelessWidget {
     required this.highlight,
   });
 
+  IconData _iconForAvatarKey(String key) {
+    switch (key) {
+      case 'detective':
+        return Icons.manage_search;
+      case 'owl':
+        return Icons.visibility;
+      case 'robot':
+        return Icons.smart_toy_outlined;
+      case 'fox':
+        return Icons.pets_outlined;
+      case 'star':
+        return Icons.star_outline;
+      case 'bolt':
+        return Icons.bolt;
+      case 'shield':
+        return Icons.shield_outlined;
+      case 'leaf':
+        return Icons.eco_outlined;
+      case 'monkey':
+      default:
+        return Icons.emoji_nature;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -238,16 +262,17 @@ class _LeaderboardRow extends StatelessWidget {
     return Card(
       color: bg,
       child: ListTile(
+        //Avatar on the left
         leading: CircleAvatar(
-          backgroundColor: highlight ? cs.onPrimaryContainer.withOpacity(0.15) : null,
-          child: Text(
-            rankText.replaceFirst('#', ''),
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              color: fg,
-            ),
+          backgroundColor: highlight
+              ? cs.onPrimaryContainer.withOpacity(0.15)
+              : cs.secondaryContainer,
+          child: Icon(
+            _iconForAvatarKey(entry.avatarKey),
+            color: highlight ? cs.onPrimaryContainer : cs.onSecondaryContainer,
           ),
         ),
+
         title: Text(
           entry.displayName,
           style: TextStyle(
@@ -256,12 +281,19 @@ class _LeaderboardRow extends StatelessWidget {
           ),
           overflow: TextOverflow.ellipsis,
         ),
+
+        //XP + Level
         subtitle: Text(
-          'XP ${entry.xp} • Level ${entry.level} • Best daily ${entry.bestDailyStreak} • Best streak ${entry.bestPerfectStreak}',
+          'XP ${entry.xp} • Level ${entry.level}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(color: fg?.withOpacity(0.9)),
+          style: TextStyle(
+            color: fg?.withOpacity(0.9),
+            fontWeight: FontWeight.w600,
+          ),
         ),
+
+        // Rank on the right only
         trailing: Text(
           rankText,
           style: TextStyle(
@@ -273,3 +305,4 @@ class _LeaderboardRow extends StatelessWidget {
     );
   }
 }
+

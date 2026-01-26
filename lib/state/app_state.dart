@@ -11,7 +11,7 @@ import '../repositories/hybrid_case_repository.dart';
 import '../repositories/leaderboard_repository.dart';
 import '../services/local_storage.dart';
 
-class AppState {
+class AppState extends ChangeNotifier {
   final UserProgress progress;
 
   final CaseRepository caseRepository;
@@ -46,31 +46,53 @@ class AppState {
     }
   }
 
+  /// Local save is awaited; Firestore sync is NOT awaited (so UI stays smooth).
   Future<void> _save() async {
     try {
-      // Local save (fast)
       await LocalStorage.saveProgressJson(progress.toJson());
 
-      // Firestore sync (do NOT block UI)
+      // Fire-and-forget leaderboard sync (avoid blocking UI)
       _leaderboardRepo.upsertFromProgress(progress).catchError((_) {});
     } catch (e) {
       if (kDebugMode) debugPrint('Save failed: $e');
     }
   }
 
-  // ✅ Needed for Profile screen
+  // ----------------------------
+  // Profile settings
+  // ----------------------------
+
   Future<void> setDisplayName(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;
     progress.displayName = trimmed;
+    notifyListeners();
     await _save();
   }
 
-  // ✅ Needed for Profile screen
   Future<void> setAvatarKey(String key) async {
     progress.avatarKey = key;
+    notifyListeners();
     await _save();
   }
+
+  Future<void> completeOnboarding({
+    required String displayName,
+    required String avatarKey,
+  }) async {
+    final name = displayName.trim();
+
+    progress.displayName = name.isEmpty ? 'Guest Detective' : name;
+    progress.avatarKey = avatarKey;
+    progress.hasOnboarded = true;
+
+    notifyListeners();
+    await _save();
+  }
+
+  // ----------------------------
+  // Daily streak logic
+  // ----------------------------
 
   String _dateKey(DateTime dt) {
     String two(int n) => n.toString().padLeft(2, '0');
@@ -89,30 +111,32 @@ class AppState {
     final last = progress.lastOpenDate;
     progress.lastOpenDate = t;
 
-    // First ever open
     if (last == null) {
+      // first open
       if (progress.dailyStreak == 0) progress.dailyStreak = 1;
       if (progress.dailyStreak > progress.bestDailyStreak) {
         progress.bestDailyStreak = progress.dailyStreak;
       }
+      notifyListeners();
       await _save();
       return;
     }
 
-    // Same calendar day
+    // same calendar day
     if (_dateKey(last) == _dateKey(t)) {
+      notifyListeners();
       await _save();
       return;
     }
 
     final diffDays = _daysBetweenDateOnly(last, t);
-
     if (diffDays == 1) {
       progress.dailyStreak += 1;
     } else if (diffDays > 1) {
       progress.dailyStreak = 1;
     } else {
-      // clock moved backwards, ignore
+      // clock went backwards, ignore
+      notifyListeners();
       await _save();
       return;
     }
@@ -121,11 +145,17 @@ class AppState {
       progress.bestDailyStreak = progress.dailyStreak;
     }
 
+    // Queue celebration (shown in your celebration flow)
     _pendingDailyStreakEvent =
         CelebrationEvent.dailyStreakUpdated(progress.dailyStreak);
 
+    notifyListeners();
     await _save();
   }
+
+  // ----------------------------
+  // Gameplay + achievements
+  // ----------------------------
 
   Future<List<CelebrationEvent>> recordCaseSolved({
     required String caseId,
@@ -137,14 +167,15 @@ class AppState {
     DateTime? now,
   }) async {
     final DateTime t = now ?? DateTime.now();
+
     final events = <CelebrationEvent>[];
     final oldLevel = progress.level;
 
-    // Prevent repeats for built-in pool (fine)
+    // Prevent repeats for built-in pool
     final wasNew = progress.solvedCaseIds.add(caseId);
     if (wasNew) progress.casesSolvedTotal += 1;
 
-    // Snapshot answer record (works for AI/generated too)
+    // Store snapshot in bounded answer history
     progress.recentAnswers.add(
       AnswerRecord(
         caseId: caseId,
@@ -166,6 +197,7 @@ class AppState {
       progress.recentAnswers.removeRange(0, extra);
     }
 
+    // Update counters / XP
     if (isCorrect) {
       progress.correctAnswersTotal += 1;
 
@@ -176,6 +208,7 @@ class AppState {
 
       int xpGain = xpForDifficulty(difficulty);
 
+      // Hint penalty: /3 rounded, min 1
       if (usedHint) {
         xpGain = (xpGain / 3).round();
         if (xpGain < 1) xpGain = 1;
@@ -186,21 +219,25 @@ class AppState {
       progress.sessionStreak = 0;
     }
 
+    // Achievement unlock checks
     final unlockedAchievementIds = _evaluateAndUnlockAchievements(t);
     for (final id in unlockedAchievementIds) {
       events.add(CelebrationEvent.achievementUnlocked(id));
     }
 
+    // Level-up check
     final newLevel = progress.level;
     if (newLevel > oldLevel) {
       events.add(CelebrationEvent.levelUp(oldLevel, newLevel));
     }
 
+    // Inject daily streak celebration (if any)
     if (_pendingDailyStreakEvent != null) {
       events.insert(0, _pendingDailyStreakEvent!);
       _pendingDailyStreakEvent = null;
     }
 
+    notifyListeners();
     await _save();
     return events;
   }
@@ -237,18 +274,9 @@ class AppState {
     return unlocked;
   }
 
-  Future<void> completeOnboarding({
-    required String displayName,
-    required String avatarKey,
-  }) async {
-    progress.displayName = displayName.trim().isEmpty ? 'Guest Detective' : displayName.trim();
-    progress.avatarKey = avatarKey;
-    progress.hasOnboarded = true;
-    await setDisplayName(progress.displayName);
-    await setAvatarKey(progress.avatarKey);
-    // setDisplayName/setAvatarKey already save; but make sure hasOnboarded is saved too:
-    await LocalStorage.saveProgressJson(progress.toJson());
-  }
+  // ----------------------------
+  // Reset
+  // ----------------------------
 
   Future<void> resetProgress() async {
     await LocalStorage.clearAll();
@@ -260,9 +288,6 @@ class AppState {
     progress.bestDailyStreak = 0;
     progress.lastOpenDate = null;
 
-    progress.hasOnboarded = false;
-    progress.displayName = 'Guest Detective';
-    progress.avatarKey = 'monkey';
     progress.casesSolvedTotal = 0;
     progress.correctAnswersTotal = 0;
     progress.bestPerfectStreak = 0;
@@ -273,8 +298,16 @@ class AppState {
     progress.achievementUnlockedAt.clear();
     progress.recentAnswers.clear();
 
+    // Reset profile basics + onboarding
+    progress.displayName = 'Guest Detective';
+    progress.avatarKey = 'monkey';
+    progress.hasOnboarded = false;
+
     _pendingDailyStreakEvent = null;
 
+    notifyListeners();
+
+    // Save clean state locally + update leaderboard (fire-and-forget)
     await LocalStorage.saveProgressJson(progress.toJson());
     _leaderboardRepo.upsertFromProgress(progress).catchError((_) {});
   }

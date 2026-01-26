@@ -20,12 +20,19 @@ class FakeNewsDetectiveApp extends StatelessWidget {
       return AppState(progress: progress);
     }
 
-    // First app launch → generate user
-    final newId = const Uuid().v4();
+    final existingId = await LocalStorage.loadUserId();
+    final userId = existingId ?? const Uuid().v4();
+
+    if (existingId == null) {
+      await LocalStorage.saveUserId(userId);
+    }
+
     final progress = UserProgress(
-      userId: newId,
+      userId: userId,
       hasOnboarded: false,
     );
+
+    await LocalStorage.saveProgressJson(progress.toJson());
 
     return AppState(progress: progress);
   }
@@ -53,8 +60,6 @@ class FakeNewsDetectiveApp extends StatelessWidget {
             title: 'Fake News Detective',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light(),
-
-            /// 👇 Onboarding decision
             home: appState.progress.hasOnboarded
                 ? const HomeShell()
                 : const OnboardingFlow(),

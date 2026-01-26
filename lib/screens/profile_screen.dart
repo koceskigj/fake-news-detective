@@ -2,6 +2,7 @@ import 'package:fake_news_detective/screens/stats_screen.dart';
 import 'package:flutter/material.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
+import 'onboarding/onboarding_flow.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -223,6 +224,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (confirmed != true) return;
 
     await appState.resetProgress();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const OnboardingFlow()),
+          (route) => false,
+    );
 
     if (!mounted) return;
     setState(() {});

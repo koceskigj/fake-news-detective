@@ -237,6 +237,19 @@ class AppState {
     return unlocked;
   }
 
+  Future<void> completeOnboarding({
+    required String displayName,
+    required String avatarKey,
+  }) async {
+    progress.displayName = displayName.trim().isEmpty ? 'Guest Detective' : displayName.trim();
+    progress.avatarKey = avatarKey;
+    progress.hasOnboarded = true;
+    await setDisplayName(progress.displayName);
+    await setAvatarKey(progress.avatarKey);
+    // setDisplayName/setAvatarKey already save; but make sure hasOnboarded is saved too:
+    await LocalStorage.saveProgressJson(progress.toJson());
+  }
+
   Future<void> resetProgress() async {
     await LocalStorage.clearAll();
 
@@ -247,6 +260,9 @@ class AppState {
     progress.bestDailyStreak = 0;
     progress.lastOpenDate = null;
 
+    progress.hasOnboarded = false;
+    progress.displayName = 'Guest Detective';
+    progress.avatarKey = 'monkey';
     progress.casesSolvedTotal = 0;
     progress.correctAnswersTotal = 0;
     progress.bestPerfectStreak = 0;

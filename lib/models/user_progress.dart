@@ -13,6 +13,7 @@ class UserProgress {
   int dailyStreak;
   DateTime? lastOpenDate;
 
+  bool hasOnboarded;
   int casesSolvedTotal;
   int correctAnswersTotal;
   int bestPerfectStreak;
@@ -34,6 +35,7 @@ class UserProgress {
     this.avatarKey = 'monkey',
     this.dailyStreak = 0,
     this.lastOpenDate,
+    this.hasOnboarded = false,
     this.casesSolvedTotal = 0,
     this.correctAnswersTotal = 0,
     this.bestPerfectStreak = 0,
@@ -85,6 +87,7 @@ class UserProgress {
     'avatarKey': avatarKey,
     'dailyStreak': dailyStreak,
     'lastOpenDate': lastOpenDate?.toIso8601String(),
+    'hasOnboarded': hasOnboarded,
     'casesSolvedTotal': casesSolvedTotal,
     'correctAnswersTotal': correctAnswersTotal,
     'bestPerfectStreak': bestPerfectStreak,
@@ -121,6 +124,7 @@ class UserProgress {
       lastOpenDate: json['lastOpenDate'] == null
           ? null
           : DateTime.parse(json['lastOpenDate'] as String),
+      hasOnboarded: (json['hasOnboarded'] as bool?) ?? false,
       casesSolvedTotal: (json['casesSolvedTotal'] as num?)?.toInt() ?? 0,
       correctAnswersTotal: (json['correctAnswersTotal'] as num?)?.toInt() ?? 0,
       bestPerfectStreak: (json['bestPerfectStreak'] as num?)?.toInt() ?? 0,

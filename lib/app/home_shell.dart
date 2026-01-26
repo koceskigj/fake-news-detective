@@ -6,14 +6,17 @@ import '../screens/profile_screen.dart';
 import '../state/app_state_scope.dart';
 
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
+  final int initialIndex;
+
+  const HomeShell({super.key, this.initialIndex = 0});
 
   @override
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
-  int _index = 0;
+class _HomeShellState extends State<HomeShell>
+    with WidgetsBindingObserver {
+  late int _index;
 
   final _pages = const [
     CasesScreen(),
@@ -26,6 +29,9 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Initialize tab index (important for onboarding redirect)
+    _index = widget.initialIndex;
 
     // Trigger once after first build (app start)
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -42,21 +48,26 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!mounted) return;
-
     if (state == AppLifecycleState.resumed) {
       AppStateScope.of(context).onAppResumed();
-      // No setState needed; streak event shows after next solved case.
     }
+  }
+
+  void _onTap(int newIndex) {
+    if (newIndex == _index) return;
+    setState(() => _index = newIndex);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_index],
+      body: IndexedStack(
+        index: _index,
+        children: _pages,
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        onDestinationSelected: _onTap,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.article_outlined),

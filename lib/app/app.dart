@@ -7,6 +7,7 @@ import '../models/user_progress.dart';
 import '../services/local_storage.dart';
 import '../state/app_state.dart';
 import '../state/app_state_scope.dart';
+import '../screens/onboarding/onboarding_flow.dart';
 
 class FakeNewsDetectiveApp extends StatelessWidget {
   const FakeNewsDetectiveApp({super.key});
@@ -19,8 +20,12 @@ class FakeNewsDetectiveApp extends StatelessWidget {
       return AppState(progress: progress);
     }
 
+    // First app launch → generate user
     final newId = const Uuid().v4();
-    final progress = UserProgress(userId: newId);
+    final progress = UserProgress(
+      userId: newId,
+      hasOnboarded: false,
+    );
 
     return AppState(progress: progress);
   }
@@ -40,13 +45,19 @@ class FakeNewsDetectiveApp extends StatelessWidget {
           );
         }
 
+        final appState = snap.data!;
+
         return AppStateScope(
-          state: snap.data!,
+          state: appState,
           child: MaterialApp(
             title: 'Fake News Detective',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light(),
-            home: const HomeShell(),
+
+            /// 👇 Onboarding decision
+            home: appState.progress.hasOnboarded
+                ? const HomeShell()
+                : const OnboardingFlow(),
           ),
         );
       },

@@ -17,57 +17,61 @@ class AchievementDetailScreen extends StatelessWidget {
     return '${dt.year}-${two(dt.month)}-${two(dt.day)}';
   }
 
+  String get _assetPath => 'assets/achievements/${achievement.iconKey}.png';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const BrandedAppBar(),
-      body: Padding(
+      appBar: BrandedAppBar(showDailyStreak: true, extraActions: const []),
+      body: ListView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const CircleAvatar(
-                  radius: 28,
-                  child: Icon(Icons.emoji_events_outlined, size: 28),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    achievement.title,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              achievement.description,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 14),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.calendar_month_outlined),
-                title: const Text('Unlocked on'),
-                subtitle: Text(_fmtDate(unlockedAt)),
+        children: [
+          Text(
+            achievement.title,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            achievement.description,
+            style: const TextStyle(fontSize: 16, height: 1.3),
+          ),
+          const SizedBox(height: 14),
+
+          // ✅ Badge image under the description
+          Center(
+            child: SizedBox(
+              width: 360,
+              height: 360,
+              child: Image.asset(
+                _assetPath,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stack) {
+                  // Fallback if image missing
+                  return const Center(
+                    child: Icon(Icons.emoji_events_outlined, size: 80),
+                  );
+                },
               ),
             ),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.bolt),
-                title: const Text('XP reward'),
-                subtitle: Text('${achievement.xpReward} XP'),
-              ),
+          ),
+
+          const SizedBox(height: 14),
+
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.calendar_month_outlined),
+              title: const Text('Unlocked on'),
+              subtitle: Text(_fmtDate(unlockedAt)),
             ),
-            const Spacer(),
-            FilledButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Back'),
+          ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.bolt),
+              title: const Text('XP reward'),
+              subtitle: Text('${achievement.xpReward} XP'),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

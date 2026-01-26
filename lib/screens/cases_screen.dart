@@ -256,15 +256,21 @@ class _CasesScreenState extends State<CasesScreen> {
           child: isLoadingInitial
               ? const Center(child: CircularProgressIndicator())
               : (_current == null
-              ? Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              CircularProgressIndicator(),
-              SizedBox(height: 12),
-              Text('Generating a new case…'),
-            ],
+              ? Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: const [
+                CircularProgressIndicator(),
+                SizedBox(height: 12),
+                Text(
+                  'Generating a new case…',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           )
-              : ListView(
+                  : ListView(
             children: [
               CasePostCard(item: _current!),
               const SizedBox(height: 12),

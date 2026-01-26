@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/celebration_event.dart';
 import '../data/achievements_catalog.dart';
+import '../models/celebration_event.dart';
 
 class CelebrationDialog extends StatelessWidget {
   final CelebrationEvent event;
@@ -11,93 +11,117 @@ class CelebrationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    String title;
-    String subtitle;
-    IconData rightIcon;
+    final bool isAchievement =
+        event.type == CelebrationEventType.achievementUnlocked;
+    final bool isLevelUp = event.type == CelebrationEventType.levelUp;
+    final bool isDaily = event.type == CelebrationEventType.dailyStreakUpdated;
 
-    switch (event.type) {
-      case CelebrationEventType.levelUp:
-        title = 'Level Up!';
-        subtitle = 'You are now Level ${event.newLevel} 🎉';
-        rightIcon = Icons.bolt;
-        break;
+    String headerText;
+    String line2;
+    String? mainImageAsset;
 
-      case CelebrationEventType.dailyStreakUpdated:
-        title = 'Daily Streak!';
-        subtitle = 'You’ve kept your streak: ${event.newDailyStreak} day(s) 🔥';
-        rightIcon = Icons.local_fire_department_outlined;
-        break;
+    const levelUpAsset = 'assets/achievements/leveling_up.png';
+    const dailyStreakAsset = 'assets/achievements/leveling_up.png';
 
-      case CelebrationEventType.achievementUnlocked:
-      default:
-        final ach = achievementsCatalog.firstWhere(
-              (a) => a.id == event.achievementId,
-          orElse: () => achievementsCatalog.first,
-        );
-        title = 'Achievement Unlocked!';
-        subtitle = 'Congratulations! You unlocked "${ach.title}"';
-        rightIcon = Icons.emoji_events_outlined;
-        break;
+    if (isLevelUp) {
+      headerText = 'Level Up!';
+      line2 = 'You are now Level ${event.newLevel} 🎉';
+      mainImageAsset = levelUpAsset;
+    } else if (isDaily) {
+      headerText = 'Daily Streak!';
+      line2 = 'Streak continued: ${event.newDailyStreak} day(s) 📅';
+      mainImageAsset = dailyStreakAsset;
+    } else {
+      // Achievement unlocked
+      final ach = achievementsCatalog.firstWhere(
+            (a) => a.id == event.achievementId,
+        orElse: () => achievementsCatalog.first,
+      );
+
+      headerText = 'Achievement Unlocked!';
+      line2 = 'You unlocked "${ach.title}"';
+      mainImageAsset = 'assets/achievements/${ach.iconKey}.png';
     }
 
     return Center(
       child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.92, end: 1.0),
-        duration: const Duration(milliseconds: 180),
+        tween: Tween(begin: 0.95, end: 1.0),
+        duration: const Duration(milliseconds: 160),
         curve: Curves.easeOut,
-        builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+        builder: (context, scale, child) =>
+            Transform.scale(scale: scale, child: child),
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           backgroundColor: cs.surface,
-          titlePadding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
-          contentPadding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
-          actionsPadding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
-          title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-          content: Row(
-            children: [
-              // Mascot placeholder (Stojche)
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  Icons.emoji_nature,
-                  size: 34,
-                  color: cs.onPrimaryContainer,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(subtitle, style: const TextStyle(height: 1.25)),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(rightIcon, size: 18, color: cs.primary),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Nice work, detective!',
-                          style: TextStyle(
-                            color: cs.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+
+          titlePadding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
+          contentPadding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+
+          title: Text(
+            headerText,
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
+
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ✅ Main image for all event types
+                if (mainImageAsset != null) ...[
+                  Center(
+                    child: SizedBox(
+                      width: 130,
+                      height: 130,
+                      child: Image.asset(
+                        mainImageAsset!,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => Icon(
+                          isAchievement
+                              ? Icons.emoji_events_outlined
+                              : isLevelUp
+                              ? Icons.bolt
+                              : Icons.calendar_month_outlined,
+                          size: 72,
+                          color: cs.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                const Text(
+                  'Congratulations detective!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  line2,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurfaceVariant,
+                    height: 1.25,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+
           actions: [
-            FilledButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Continue'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FilledButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Continue'),
+                ),
+              ],
             ),
           ],
         ),

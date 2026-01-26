@@ -13,15 +13,18 @@ class RewardsScreen extends StatefulWidget {
 }
 
 class _RewardsScreenState extends State<RewardsScreen> {
-  String _fmtDate(DateTime dt) {
-    String two(int n) => n.toString().padLeft(2, '0');
-    return '${dt.year}-${two(dt.month)}-${two(dt.day)}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final appState = AppStateScope.of(context);
     final progress = appState.progress;
+
+    // Blue-ish for unlocked
+    const unlockedBg = Color(0xFFE8F0FE); // soft blue
+    const unlockedFg = Color(0xFF174EA6); // deep blue
+
+    // Grey for locked
+    const lockedBg = Color(0xFFF2F2F2);
+    const lockedFg = Color(0xFF6B6B6B);
 
     return Scaffold(
       appBar: const BrandedAppBar(),
@@ -30,17 +33,20 @@ class _RewardsScreenState extends State<RewardsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Level card -> Leaderboard
             Card(
               child: ListTile(
                 leading: const Icon(Icons.bolt),
                 title: Text('Level ${progress.level}'),
                 subtitle: Text('XP: ${progress.xp}'),
                 trailing: const Icon(Icons.leaderboard_outlined),
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
                   );
+                  if (!mounted) return;
+                  setState(() {}); // refresh after returning
                 },
               ),
             ),
@@ -48,7 +54,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
             const SizedBox(height: 16),
             const Text(
               'Badges',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 10),
 
@@ -63,13 +69,16 @@ class _RewardsScreenState extends State<RewardsScreen> {
                 itemBuilder: (context, i) {
                   final a = achievementsCatalog[i];
                   final unlocked = progress.isAchievementUnlocked(a.id);
-
-                  // ✅ FIX: define unlockedAt here so it can be used in UI + onTap
                   final unlockedAt = progress.achievementUnlockedAt[a.id];
+
+                  final bg = unlocked ? unlockedBg : lockedBg;
+                  final fg = unlocked ? unlockedFg : lockedFg;
+
+                  final badgePath = 'assets/achievements/${a.iconKey}.png';
 
                   return InkWell(
                     borderRadius: BorderRadius.circular(12),
-                    onTap: () {
+                    onTap: () async {
                       if (!unlocked) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Not unlocked yet 🔒')),
@@ -84,7 +93,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                         return;
                       }
 
-                      Navigator.push(
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => AchievementDetailScreen(
@@ -93,35 +102,46 @@ class _RewardsScreenState extends State<RewardsScreen> {
                           ),
                         ),
                       );
+
+                      if (!mounted) return;
+                      setState(() {});
                     },
-                    child: Opacity(
-                      opacity: unlocked ? 1.0 : 0.45,
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(unlocked ? Icons.emoji_events_outlined : Icons.lock_outline),
-                              const SizedBox(height: 8),
-                              Text(
-                                a.title,
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
+                    child: Card(
+                      clipBehavior: Clip.antiAlias,
+                      child: Container(
+                        color: bg,
+                        padding: const EdgeInsets.all(10),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (unlocked)
+                              SizedBox(
+                                width: 46,
+                                height: 46,
+                                child: Image.asset(
+                                  badgePath,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) =>
+                                      Icon(Icons.emoji_events_outlined, color: fg),
                                 ),
+                              )
+                            else
+                              Icon(Icons.lock_outline, color: fg),
+
+                            const SizedBox(height: 8),
+
+                            Text(
+                              a.title,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: fg,
                               ),
-                              const SizedBox(height: 6),
-                              if (unlocked && unlockedAt != null)
-                                Text(
-                                  _fmtDate(unlockedAt),
-                                  style: const TextStyle(fontSize: 11),
-                                ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

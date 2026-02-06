@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LocalStorage {
   static const _progressKey = 'user_progress_v1';
   static const _userIdKey = 'stable_user_id';
+  static const _modeKey = 'app_mode_v1'; // "student" | "teacher"
 
   static Future<void> saveProgressJson(Map<String, dynamic> jsonMap) async {
     final prefs = await SharedPreferences.getInstance();
@@ -42,4 +43,15 @@ class LocalStorage {
       await prefs.remove(_userIdKey);
     }
   }
+
+  static Future<void> saveAppMode(String mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_modeKey, mode);
+  }
+
+  static Future<String?> loadAppMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_modeKey);
+  }
+
 }

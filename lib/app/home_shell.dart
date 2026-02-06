@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/cases_screen.dart';
+import '../screens/create_case_screen.dart';
 import '../screens/learn_screen.dart';
 import '../screens/rewards_screen.dart';
 import '../screens/profile_screen.dart';
@@ -23,6 +24,7 @@ class _HomeShellState extends State<HomeShell>
     LearnScreen(),
     RewardsScreen(),
     ProfileScreen(),
+    CreateCaseScreen(),
   ];
 
   @override
@@ -88,6 +90,11 @@ class _HomeShellState extends State<HomeShell>
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: 'Profile',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.add_box_outlined),
+            selectedIcon: Icon(Icons.add_box),
+            label: 'Create',
           ),
         ],
       ),

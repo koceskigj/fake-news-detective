@@ -59,6 +59,35 @@ class AppState extends ChangeNotifier {
   }
 
   // ----------------------------
+  // Teacher / Student mode
+  // ----------------------------
+
+  bool get isTeacherMode => (progress.appMode == 'teacher');
+  bool get isStudentMode => (progress.appMode == 'student');
+
+  Future<void> setAppModeStudent() async {
+    progress.appMode = 'student';
+    progress.teacherUid = null;
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> setAppModeTeacher() async {
+    progress.appMode = 'teacher';
+    // teacherUid stays null until login succeeds
+    notifyListeners();
+    await _save();
+  }
+
+  /// Call this when teacher login succeeds (FirebaseAuth)
+  Future<void> setTeacherUid(String uid) async {
+    progress.teacherUid = uid;
+    progress.appMode = 'teacher';
+    notifyListeners();
+    await _save();
+  }
+
+  // ----------------------------
   // Profile settings
   // ----------------------------
 
@@ -76,6 +105,7 @@ class AppState extends ChangeNotifier {
     await _save();
   }
 
+  /// Used by OnboardingFlow (student)
   Future<void> completeOnboarding({
     required String displayName,
     required String avatarKey,
@@ -85,6 +115,10 @@ class AppState extends ChangeNotifier {
     progress.displayName = name.isEmpty ? 'Guest Detective' : name;
     progress.avatarKey = avatarKey;
     progress.hasOnboarded = true;
+
+    // Ensure student mode when completing onboarding
+    progress.appMode = 'student';
+    progress.teacherUid = null;
 
     notifyListeners();
     await _save();
@@ -278,6 +312,8 @@ class AppState extends ChangeNotifier {
   // Reset
   // ----------------------------
 
+  /// Keeps same userId but resets progress,
+  /// and forces RoleGate + onboarding again.
   Future<void> resetProgress() async {
     await LocalStorage.clearAll();
 
@@ -303,12 +339,34 @@ class AppState extends ChangeNotifier {
     progress.avatarKey = 'monkey';
     progress.hasOnboarded = false;
 
+    // IMPORTANT: force role choice again
+    progress.appMode = null;
+    progress.teacherUid = null;
+
     _pendingDailyStreakEvent = null;
 
     notifyListeners();
 
-    // Save clean state locally + update leaderboard (fire-and-forget)
     await LocalStorage.saveProgressJson(progress.toJson());
     _leaderboardRepo.upsertFromProgress(progress).catchError((_) {});
   }
+
+  /// Teacher logout: clears teacher UID and forces RoleGate again.
+  Future<void> logoutTeacher() async {
+    progress.teacherUid = null;
+    progress.appMode = null; // so RoleGate shows again
+    notifyListeners();
+    await LocalStorage.saveProgressJson(progress.toJson());
+  }
+
+  Future<void> clearRoleSelection() async {
+    progress.appMode = null;      // show RoleGate again
+    progress.teacherUid = null;
+    progress.hasOnboarded = false; // so student onboarding can run after choosing Student
+
+    notifyListeners();
+    await _save();
+  }
+
+
 }

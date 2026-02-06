@@ -2,9 +2,15 @@ import 'answer_record.dart';
 
 class UserProgress {
   final String userId;
+
+  /// 'student' | 'teacher' | null (null => show RoleGate)
+  String? appMode;
+
+  /// If teacher logs in (FirebaseAuth), store uid here (optional)
+  String? teacherUid;
+
   String displayName;
   String avatarKey;
-
 
   int xp;
   int level;
@@ -19,7 +25,6 @@ class UserProgress {
   int bestPerfectStreak;
   int sessionStreak;
 
-
   final Set<String> solvedCaseIds;
   final Set<String> unlockedAchievementIds;
   final Map<String, DateTime> achievementUnlockedAt;
@@ -28,6 +33,8 @@ class UserProgress {
 
   UserProgress({
     required this.userId,
+    this.appMode, // <- null by default, so RoleGate shows on first run
+    this.teacherUid,
     this.xp = 0,
     this.level = 1,
     this.bestDailyStreak = 0,
@@ -48,6 +55,53 @@ class UserProgress {
         unlockedAchievementIds = unlockedAchievementIds ?? <String>{},
         achievementUnlockedAt = achievementUnlockedAt ?? <String, DateTime>{},
         recentAnswers = recentAnswers ?? <AnswerRecord>[];
+
+  // Optional but helpful (some screens may call it)
+  UserProgress copyWith({
+    String? userId,
+    String? appMode,
+    String? teacherUid,
+    bool clearTeacherUid = false,
+    String? displayName,
+    String? avatarKey,
+    int? xp,
+    int? level,
+    int? bestDailyStreak,
+    int? dailyStreak,
+    DateTime? lastOpenDate,
+    bool clearLastOpenDate = false,
+    bool? hasOnboarded,
+    int? casesSolvedTotal,
+    int? correctAnswersTotal,
+    int? bestPerfectStreak,
+    int? sessionStreak,
+    Set<String>? solvedCaseIds,
+    Set<String>? unlockedAchievementIds,
+    Map<String, DateTime>? achievementUnlockedAt,
+    List<AnswerRecord>? recentAnswers,
+  }) {
+    return UserProgress(
+      userId: userId ?? this.userId,
+      appMode: appMode ?? this.appMode,
+      teacherUid: clearTeacherUid ? null : (teacherUid ?? this.teacherUid),
+      displayName: displayName ?? this.displayName,
+      avatarKey: avatarKey ?? this.avatarKey,
+      xp: xp ?? this.xp,
+      level: level ?? this.level,
+      bestDailyStreak: bestDailyStreak ?? this.bestDailyStreak,
+      dailyStreak: dailyStreak ?? this.dailyStreak,
+      lastOpenDate: clearLastOpenDate ? null : (lastOpenDate ?? this.lastOpenDate),
+      hasOnboarded: hasOnboarded ?? this.hasOnboarded,
+      casesSolvedTotal: casesSolvedTotal ?? this.casesSolvedTotal,
+      correctAnswersTotal: correctAnswersTotal ?? this.correctAnswersTotal,
+      bestPerfectStreak: bestPerfectStreak ?? this.bestPerfectStreak,
+      sessionStreak: sessionStreak ?? this.sessionStreak,
+      solvedCaseIds: solvedCaseIds ?? this.solvedCaseIds,
+      unlockedAchievementIds: unlockedAchievementIds ?? this.unlockedAchievementIds,
+      achievementUnlockedAt: achievementUnlockedAt ?? this.achievementUnlockedAt,
+      recentAnswers: recentAnswers ?? this.recentAnswers,
+    );
+  }
 
   int computeLevelFromXp() {
     int lvl = 1;
@@ -80,6 +134,8 @@ class UserProgress {
 
   Map<String, dynamic> toJson() => {
     'userId': userId,
+    'appMode': appMode,
+    'teacherUid': teacherUid,
     'xp': xp,
     'level': level,
     'bestDailyStreak': bestDailyStreak,
@@ -114,7 +170,11 @@ class UserProgress {
         .toList();
 
     final p = UserProgress(
-      userId: json['userId'] as String,
+      userId: (json['userId'] as String?) ?? '',
+      // Backwards compatible:
+      // - if old saves had no appMode, keep null => RoleGate will show
+      appMode: json['appMode'] as String?,
+      teacherUid: json['teacherUid'] as String?,
       xp: (json['xp'] as num?)?.toInt() ?? 0,
       level: (json['level'] as num?)?.toInt() ?? 1,
       bestDailyStreak: (json['bestDailyStreak'] as num?)?.toInt() ?? 0,
@@ -140,7 +200,6 @@ class UserProgress {
       recentAnswers: answers,
     );
 
-    // Recalculate in case formula changes later
     p.recalcLevel();
     return p;
   }

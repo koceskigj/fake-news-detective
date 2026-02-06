@@ -2,7 +2,9 @@ import 'package:fake_news_detective/screens/stats_screen.dart';
 import 'package:flutter/material.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
-import 'onboarding/onboarding_flow.dart';
+
+// ✅ role gate (adjust path/name if yours differs)
+import '../screens/role_gate/role_gate_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -69,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onSubmitted: (_) {
                     final name = controller.text.trim();
                     if (name.isEmpty) return;
-                    Navigator.pop(sheetContext, name); // return value
+                    Navigator.pop(sheetContext, name);
                   },
                 ),
                 const SizedBox(height: 10),
@@ -86,7 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onPressed: () {
                           final name = controller.text.trim();
                           if (name.isEmpty) return;
-                          Navigator.pop(sheetContext, name); // return value
+                          Navigator.pop(sheetContext, name);
                         },
                         child: const Text('Save'),
                       ),
@@ -100,7 +102,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
 
-    // Sheet closed — now it’s safe to update state + save
     if (newName == null) return;
 
     final appState = AppStateScope.of(context);
@@ -109,8 +110,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     setState(() {});
   }
-
-
 
   Future<void> _showAvatarSheet() async {
     final appState = AppStateScope.of(context);
@@ -197,7 +196,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {});
   }
 
-
   Future<void> _confirmAndReset(BuildContext context) async {
     final appState = AppStateScope.of(context);
 
@@ -224,16 +222,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (confirmed != true) return;
 
     await appState.resetProgress();
+    if (!context.mounted) return;
+
+    // ✅ After reset, go to Role selection (NOT onboarding)
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const OnboardingFlow()),
+      MaterialPageRoute(builder: (_) => const RoleGateScreen()),
           (route) => false,
-    );
-
-    if (!mounted) return;
-    setState(() {});
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Progress reset ✅')),
     );
   }
 

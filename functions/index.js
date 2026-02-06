@@ -1,51 +1,26 @@
-const functions = require("firebase-functions/v2/https");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
-const { defineSecret } = require("firebase-functions/params");
+const admin = require("firebase-admin");
 
-// ✅ Define secret properly for Functions v2
-const GROQ_API_KEY = defineSecret("AI_API_KEY");
+admin.initializeApp();
+const db = admin.firestore();
 
-// Simple safe fallback if AI fails
-function fallbackCase({ category, difficulty }) {
-    const isFake = Math.random() < 0.55;
-    const tags = isFake
-        ? ["clickbait", "missing-source", category]
-        : ["credible-tone", "specific-details", category];
-
-    return {
-        title: isFake
-            ? `BREAKING: ${category} scandal “exposed” overnight (people shocked!)`
-            : `Community update: new ${category} program announced`,
-        snippet: isFake
-            ? "A viral post claims major changes with no sources. It urges you to share immediately."
-            : "An announcement shares practical details and a clear timeline for implementation.",
-        sourceName: isFake ? "ViralDaily" : "Community Bulletin",
-        isFake,
-        explanation: isFake
-            ? "Red flags: emotional language, vague claims, and no credible sources. Verify before sharing."
-            : "This reads like a normal announcement: specific details, calm tone, and plausible scope.",
-        tags,
-        domainHint: isFake ? "viral.example" : "news.example",
-    };
+// ======== Helpers ========
+async function isTeacherUid(uid) {
+    const doc = await db.collection("users").doc(uid).get();
+    return doc.exists && doc.data()?.role === "teacher";
 }
 
-async function callGroqAI({ category, difficulty, avoidTitles }) {
-    // ✅ Get secret value and trim whitespace/newlines
-    const apiKey = (GROQ_API_KEY.value() || "").trim();
+function sha1Hex(input) {
+    const crypto = require("crypto");
+    return crypto.createHash("sha1").update(input).digest("hex");
+}
 
-    if (!apiKey) {
-        logger.warn("AI_API_KEY is empty -> using fallback.");
-        return fallbackCase({ category, difficulty });
-    }
-
-    // ✅ Safe debug: length only (doesn't leak key)
-    logger.info(`Groq key length: ${apiKey.length}`);
-
+// ======== Groq AI ========
+async function callGroqAI({ apiKey, category, difficulty, avoidTitles }) {
     const avoidText =
         avoidTitles && avoidTitles.length
-            ? `Avoid generating titles that match or closely resemble any of these recent titles:\n- ${avoidTitles.join(
-                "\n- "
-            )}\n`
+            ? `Avoid titles similar to:\n- ${avoidTitles.join("\n- ")}\n`
             : "";
 
     const prompt = `
@@ -61,18 +36,19 @@ Output JSON with exactly these keys:
 - sourceName (string)
 - isFake (boolean)
 - explanation (string, 2-3 sentences explaining the reasoning/red flags)
-- tags (array of 2-6 strings; include one of: clickbait, missing-source, fearbait, context-missing, absurd-claim; and include "${category}")
+- tags (array of 2-6 strings, include one of: clickbait, missing-source, fearbait, context-missing, absurd-claim, and include "${category}")
 - domainHint (string, looks like a domain; can be fictional)
 
 Rules:
-- Appropriate for teens.
+- Keep content appropriate for teens.
 - Non-graphic, non-hateful, non-political.
 - Do not mention real people.
 ${avoidText}
 `;
 
     const body = {
-        model: "llama-3.1-8b-instant",
+        // IMPORTANT: pick a currently supported Groq model from your console
+        model: "llama-3.3-70b-versatile",
         messages: [
             { role: "system", content: "You output ONLY JSON. No extra text." },
             { role: "user", content: prompt },
@@ -97,69 +73,152 @@ ${avoidText}
 
     const json = await resp.json();
     const content = json.choices?.[0]?.message?.content ?? "";
-
     return JSON.parse(content);
 }
 
-exports.generateCase = functions.onRequest(
-    {
-        region: "europe-west1",
-        secrets: [GROQ_API_KEY], // ✅ use the defined secret object
-    },
-    async (req, res) => {
-        try {
-            res.set("Access-Control-Allow-Origin", "*");
-            res.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-            res.set("Access-Control-Allow-Headers", "Content-Type");
+// ======== Callable: claimUserCase ========
+exports.claimUserCase = onCall(async (req) => {
+    if (!req.auth) throw new HttpsError("unauthenticated", "Login required.");
+    const uid = req.auth.uid;
+    if (!(await isTeacherUid(uid)))
+        throw new HttpsError("permission-denied", "Teacher only.");
 
-            if (req.method === "OPTIONS") {
-                res.status(204).send("");
-                return;
-            }
+    const caseId = String(req.data?.caseId ?? "");
+    if (!caseId) throw new HttpsError("invalid-argument", "Missing caseId.");
 
-            const difficulty = Math.min(3, Math.max(1, Number(req.query.difficulty || 1)));
-            const category = String(req.query.category || req.query.topic || "technology");
+    const ref = db.collection("user_cases").doc(caseId);
 
-            const avoidTitlesRaw = String(req.query.avoidTitles || "");
-            const avoidTitles = avoidTitlesRaw
-                ? avoidTitlesRaw
-                    .split("|")
-                    .map((s) => s.trim())
-                    .filter(Boolean)
-                    .slice(0, 10)
-                : [];
+    await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists) throw new HttpsError("not-found", "Case not found.");
 
-            let data;
-            try {
-                data = await callGroqAI({ category, difficulty, avoidTitles });
-            } catch (e) {
-                logger.warn("AI call failed, using fallback", e);
-                data = fallbackCase({ category, difficulty });
-            }
-
-            const tags = Array.isArray(data.tags) ? data.tags.map(String) : [];
-            if (!tags.includes(category)) tags.push(category);
-
-            const payload = {
-                id: `ai_${Date.now()}`,
-                title: String(data.title ?? ""),
-                snippet: String(data.snippet ?? ""),
-                sourceName: String(data.sourceName ?? "AI Generator"),
-                isFake: Boolean(data.isFake),
-                explanation: String(data.explanation ?? ""),
-                tags,
-                difficulty,
-                domainHint: data.domainHint ? String(data.domainHint) : null,
-            };
-
-            if (!payload.title || !payload.snippet || !payload.explanation) {
-                throw new Error("Invalid AI payload (missing title/snippet/explanation)");
-            }
-
-            res.status(200).json(payload);
-        } catch (e) {
-            logger.error(e);
-            res.status(500).json({ error: "generateCase failed" });
+        const data = snap.data();
+        if (data.status !== "pending") {
+            throw new HttpsError("failed-precondition", "Case is not pending.");
         }
+
+        if (data.assignedTo && data.assignedTo !== uid) {
+            throw new HttpsError("already-exists", "Already claimed by another teacher.");
+        }
+
+        if (!data.assignedTo) {
+            tx.update(ref, {
+                assignedTo: uid,
+                assignedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+        }
+    });
+
+    return { ok: true };
+});
+
+// ======== Callable: reviewUserCase ========
+exports.reviewUserCase = onCall(async (req) => {
+    if (!req.auth) throw new HttpsError("unauthenticated", "Login required.");
+    const uid = req.auth.uid;
+    if (!(await isTeacherUid(uid)))
+        throw new HttpsError("permission-denied", "Teacher only.");
+
+    const caseId = String(req.data?.caseId ?? "");
+    const decision = String(req.data?.decision ?? ""); // "approved" | "rejected"
+    if (!caseId) throw new HttpsError("invalid-argument", "Missing caseId.");
+    if (!(decision === "approved" || decision === "rejected")) {
+        throw new HttpsError("invalid-argument", "Decision must be approved/rejected.");
     }
-);
+
+    const ref = db.collection("user_cases").doc(caseId);
+
+    await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists) throw new HttpsError("not-found", "Case not found.");
+
+        const data = snap.data();
+        if (data.status !== "pending") {
+            throw new HttpsError("failed-precondition", "Case already reviewed.");
+        }
+        if (data.assignedTo !== uid) {
+            throw new HttpsError("permission-denied", "You must claim this case first.");
+        }
+
+        tx.update(ref, {
+            status: decision,
+            reviewedBy: uid,
+            reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
+            reviewDecision: decision,
+        });
+    });
+
+    return { ok: true };
+});
+
+// ======== Callable: generateAIBatch ========
+exports.generateAIBatch = onCall({ secrets: ["AI_API_KEY"] }, async (req) => {
+    if (!req.auth) throw new HttpsError("unauthenticated", "Login required.");
+    const uid = req.auth.uid;
+    if (!(await isTeacherUid(uid)))
+        throw new HttpsError("permission-denied", "Teacher only.");
+
+    const apiKey = process.env.AI_API_KEY;
+    if (!apiKey) throw new HttpsError("failed-precondition", "Missing AI_API_KEY secret.");
+
+    const count = Math.min(200, Math.max(1, Number(req.data?.count ?? 100)));
+    const category = String(req.data?.category ?? "technology");
+    const difficulty = Math.min(3, Math.max(1, Number(req.data?.difficulty ?? 2)));
+
+    const avoidTitles = [];
+
+    // Get last ~20 titles to reduce duplicates (optional)
+    const recent = await db.collection("ai_cases").orderBy("createdAt", "desc").limit(20).get();
+    recent.docs.forEach((d) => {
+        const t = d.data()?.title;
+        if (typeof t === "string") avoidTitles.push(t);
+    });
+
+    let created = 0;
+
+    for (let i = 0; i < count; i++) {
+        const data = await callGroqAI({
+            apiKey,
+            category,
+            difficulty,
+            avoidTitles,
+        });
+
+        const title = String(data.title ?? "").trim();
+        const snippet = String(data.snippet ?? "").trim();
+        const explanation = String(data.explanation ?? "").trim();
+
+        if (!title || !snippet || !explanation) continue;
+
+        const fp = sha1Hex((title + "|" + snippet).toLowerCase());
+
+        // Skip duplicates by fingerprint
+        const existing = await db
+            .collection("ai_cases")
+            .where("fingerprint", "==", fp)
+            .limit(1)
+            .get();
+
+        if (!existing.empty) continue;
+
+        const tags = Array.isArray(data.tags) ? data.tags.map(String) : [];
+        if (!tags.includes(category)) tags.push(category);
+
+        await db.collection("ai_cases").add({
+            title,
+            snippet,
+            sourceName: String(data.sourceName ?? "AI Generator"),
+            isFake: Boolean(data.isFake),
+            explanation,
+            tags,
+            difficulty,
+            domainHint: data.domainHint ? String(data.domainHint) : null,
+            fingerprint: fp,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        created++;
+    }
+
+    return { ok: true, created };
+});

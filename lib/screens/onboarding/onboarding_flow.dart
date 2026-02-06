@@ -92,7 +92,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'I’m Stojche. I’ll help you spot fake news using clues and logic.',
+                    'Hi there! I’m Stojche, a fake news detective, but truth be told, just your average Prilep resident. I’ll help you spot fake news using clues and logic. Let the fun begin!',
                     style: TextStyle(
                       fontSize: 16,
                       height: 1.3,

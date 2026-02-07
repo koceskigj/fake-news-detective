@@ -3,37 +3,42 @@ class CaseItem {
   final String title;
   final String snippet;
   final String sourceName;
-  final DateTime? publishedAt;
-
-  /// True = fake/misleading, False = real/credible (within our dataset)
   final bool isFake;
-
-  /// Explanation shown after the user answers.
   final String explanation;
-
-  /// Tags like: clickbait, missing-source, manipulated-image, satire, context-missing
+  final int difficulty;
   final List<String> tags;
 
-  /// 1 = easy, 2 = medium, 3 = hard
-  final int difficulty;
+  // NEW (for user_cases)
+  final String? createdBy;
+  final String? status;
 
-  /// Optional: a fake URL string for “domain-checking” training later
-  final String? domainHint;
-
-  /// Optional: image/asset key for later (use icons/placeholders for now)
-  final String? imageKey;
-
-  const CaseItem({
+  CaseItem({
     required this.id,
     required this.title,
     required this.snippet,
     required this.sourceName,
     required this.isFake,
     required this.explanation,
-    this.publishedAt,
-    this.tags = const [],
-    this.difficulty = 1,
-    this.domainHint,
-    this.imageKey,
+    required this.difficulty,
+    required this.tags,
+    this.createdBy,
+    this.status,
   });
+
+  factory CaseItem.fromFirestore(String id, Map<String, dynamic> data) {
+    return CaseItem(
+      id: id,
+      title: (data['title'] ?? '') as String,
+      snippet: (data['snippet'] ?? '') as String,
+      sourceName: (data['sourceName'] ?? '') as String,
+      isFake: (data['isFake'] ?? false) as bool,
+      explanation: (data['explanation'] ?? '') as String,
+      difficulty: (data['difficulty'] ?? 1 as int) is int
+          ? data['difficulty'] as int
+          : (data['difficulty'] as num).toInt(),
+      tags: ((data['tags'] as List?) ?? const []).map((e) => e.toString()).toList(),
+      createdBy: data['createdBy']?.toString(),
+      status: data['status']?.toString(),
+    );
+  }
 }

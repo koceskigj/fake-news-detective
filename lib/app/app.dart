@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -16,38 +15,33 @@ import '../screens/teacher/teacher_login_screen.dart';
 class FakeNewsDetectiveApp extends StatelessWidget {
   const FakeNewsDetectiveApp({super.key});
 
-  Future<String> _ensureAuthedUid() async {
+  Future<String> _ensureAnonAuthAndGetUid() async {
     final auth = FirebaseAuth.instance;
 
-    // ✅ Important for Chrome/web so UID survives refresh/restart
-    if (kIsWeb) {
-      await auth.setPersistence(Persistence.LOCAL);
-    }
-
+    // If nobody is signed in, sign in anonymously (students).
     if (auth.currentUser == null) {
-      await auth.signInAnonymously();
+      await auth.signInAnonymously().timeout(const Duration(seconds: 10));
     }
 
-    return auth.currentUser!.uid;
+    final user = auth.currentUser;
+    if (user == null) {
+      throw Exception('Auth failed: no Firebase user after anonymous sign-in.');
+    }
+
+    return user.uid;
   }
 
   Future<AppState> _init() async {
-    // 1) Ensure Firebase auth exists (anonymous by default).
-    final uid = await _ensureAuthedUid();
+    // Ensure UID (with timeout)
+    final uid = await _ensureAnonAuthAndGetUid();
 
-    // 2) Load local progress.
+    // Load local progress
     final saved = await LocalStorage.loadProgressJson();
-
     if (saved != null) {
       var progress = UserProgress.fromJson(saved);
 
-      // 3) MIGRATION (student only):
-      // Make sure the leaderboard doc id matches request.auth.uid
-      // so Firestore rules allow write.
-      final isStudentOrUnset =
-      (progress.appMode == null || progress.appMode == 'student');
-
-      if (isStudentOrUnset && progress.userId != uid) {
+      // Migration: align stored userId with Firebase uid
+      if (progress.userId != uid) {
         progress = progress.copyWith(userId: uid);
         await LocalStorage.saveProgressJson(progress.toJson());
       }
@@ -55,17 +49,15 @@ class FakeNewsDetectiveApp extends StatelessWidget {
       return AppState(progress: progress);
     }
 
-    // 4) First launch: create progress and show RoleGate first
+    // First run
     final progress = UserProgress(
       userId: uid,
       hasOnboarded: false,
-      appMode: null, // <-- RoleGate first time
+      appMode: null, // show role gate first
       teacherUid: null,
     );
 
-    // Save immediately so refresh/hot restart doesn't create "new user progress"
     await LocalStorage.saveProgressJson(progress.toJson());
-
     return AppState(progress: progress);
   }
 
@@ -74,6 +66,24 @@ class FakeNewsDetectiveApp extends StatelessWidget {
     return FutureBuilder<AppState>(
       future: _init(),
       builder: (context, snap) {
+        if (snap.hasError) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light(),
+            home: Scaffold(
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'App failed to start:\n\n${snap.error}',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+
         if (!snap.hasData) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
@@ -85,18 +95,12 @@ class FakeNewsDetectiveApp extends StatelessWidget {
         }
 
         final appState = snap.data!;
-
         Widget home;
 
-        // 1) Role not selected yet
         if (appState.progress.appMode == null) {
           home = const RoleGateScreen();
-
-          // 2) Teacher route
         } else if (appState.progress.appMode == 'teacher') {
           home = const TeacherLoginScreen();
-
-          // 3) Student route
         } else {
           home = appState.progress.hasOnboarded
               ? const HomeShell()

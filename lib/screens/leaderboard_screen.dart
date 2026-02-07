@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../dev/leaderboard_seed.dart';
 import '../models/leaderboard_entry.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
@@ -57,37 +56,6 @@ class LeaderboardScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-
-            if (kDebugMode) ...[
-              Row(
-                children: [
-                  FilledButton.tonal(
-                    onPressed: () async {
-                      await LeaderboardSeeder().seed(count: 25);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Seeded demo users ✅')),
-                        );
-                      }
-                    },
-                    child: const Text('Seed demo'),
-                  ),
-                  const SizedBox(width: 10),
-                  TextButton(
-                    onPressed: () async {
-                      await LeaderboardSeeder().clearDemo();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Cleared demo users ✅')),
-                        );
-                      }
-                    },
-                    child: const Text('Clear demo'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-            ],
 
             Expanded(
               child: StreamBuilder<List<LeaderboardEntry>>(

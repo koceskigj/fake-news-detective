@@ -5,7 +5,6 @@ import '../widgets/branded_app_bar.dart';
 import 'case_library_screen.dart';
 import 'pattern_details_screen.dart';
 import 'package:flutter/foundation.dart';
-import '../dev/cases_seed.dart';
 
 class LearnScreen extends StatelessWidget {
   const LearnScreen({super.key});
@@ -44,41 +43,6 @@ class LearnScreen extends StatelessWidget {
             ),
           ),
 
-          if (kDebugMode) ...[
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    FilledButton.tonal(
-                      onPressed: () async {
-                        await CasesSeeder().seedFromLocalSample();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Seeded Firestore cases ✅')),
-                          );
-                        }
-                      },
-                      child: const Text('Seed cases'),
-                    ),
-                    const SizedBox(width: 10),
-                    TextButton(
-                      onPressed: () async {
-                        await CasesSeeder().clearAll();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Cleared Firestore cases ✅')),
-                          );
-                        }
-                      },
-                      child: const Text('Clear cases'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
 
           const SizedBox(height: 14),
 

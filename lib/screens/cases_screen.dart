@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 import '../models/answer_record.dart';
@@ -26,29 +24,15 @@ class _CasesScreenState extends State<CasesScreen> {
   static const Color _wrongBg = Color(0xFFFDEAEA);
   static const Color _wrongFg = Color(0xFFB3261E);
 
-  final List<String> _recentTitles = [];
-  static const int _recentTitleLimit = 10;
-
-  bool _wasRecentlyShown(CaseItem item) {
-    final t = item.title.trim().toLowerCase();
-    return t.isNotEmpty && _recentTitles.contains(t);
-  }
-
-  void _rememberShown(CaseItem item) {
-    final t = item.title.trim().toLowerCase();
-    if (t.isEmpty) return;
-    _recentTitles.add(t);
-    if (_recentTitles.length > _recentTitleLimit) _recentTitles.removeAt(0);
-  }
-
-  List<CaseItem> _allCases = [];
   CaseItem? _current;
 
   UserChoice? _choice;
   bool? _isCorrect;
 
   final List<CelebrationEvent> _pendingCelebrations = [];
+
   bool _loadedOnce = false;
+  bool _loadingCase = false;
 
   StojcheMood _stojcheMood = StojcheMood.idle;
   bool _hintUsed = false;
@@ -61,95 +45,39 @@ class _CasesScreenState extends State<CasesScreen> {
     super.didChangeDependencies();
     if (!_loadedOnce) {
       _loadedOnce = true;
-      _loadCases();
+      _ensureCurrentCase();
     }
-  }
-
-  Future<void> _loadCases() async {
-    final appState = AppStateScope.of(context);
-    final loaded = await appState.caseRepository.loadInitialCases();
-    loaded.shuffle(Random());
-
-    if (!mounted) return;
-    setState(() => _allCases = loaded);
-
-    await _ensureCurrentCase();
-  }
-
-  List<CaseItem> _unsolvedCases(Set<String> solvedIds) {
-    return _allCases.where((c) => !solvedIds.contains(c.id)).toList();
-  }
-
-  CaseItem? _pickNextCase({
-    required List<CaseItem> unsolved,
-    required int targetDifficulty,
-  }) {
-    final preferred =
-    unsolved.where((c) => c.difficulty == targetDifficulty).toList();
-    if (preferred.isNotEmpty) {
-      preferred.shuffle(Random());
-      return preferred.first;
-    }
-
-    final fallback = targetDifficulty == 3
-        ? [2, 1]
-        : targetDifficulty == 2
-        ? [1, 3]
-        : [2, 3];
-
-    for (final d in fallback) {
-      final list = unsolved.where((c) => c.difficulty == d).toList();
-      if (list.isNotEmpty) {
-        list.shuffle(Random());
-        return list.first;
-      }
-    }
-    return null;
   }
 
   Future<void> _ensureCurrentCase() async {
-    if (_loadedOnce && _allCases.isEmpty) return;
-
-    final appState = AppStateScope.of(context);
-    final progress = appState.progress;
-
-    final unsolved = _unsolvedCases(progress.solvedCaseIds);
-    CaseItem? nextItem;
-
-    if (unsolved.isNotEmpty) {
-      final target = appState.targetDifficultyFromStreak();
-      nextItem = _pickNextCase(unsolved: unsolved, targetDifficulty: target);
-    } else {
-      final target = appState.targetDifficultyFromStreak();
-      nextItem = await appState.caseRepository.generateCase(
-        progress: progress,
-        targetDifficulty: target,
-      );
-
-      // Reduce retries to 1 -> avoids long delays
-      int tries = 0;
-      while (nextItem != null && _wasRecentlyShown(nextItem) && tries < 1) {
-        tries++;
-        nextItem = await appState.caseRepository.generateCase(
-          progress: progress,
-          targetDifficulty: target,
-        );
-      }
-    }
-
-    if (!mounted) return;
+    if (_loadingCase) return;
 
     setState(() {
-      _current = nextItem;
+      _loadingCase = true;
       _choice = null;
       _isCorrect = null;
-
       _stojcheMood = StojcheMood.idle;
       _hintUsed = false;
       _hintText = null;
-
-      if (nextItem != null) _rememberShown(nextItem);
     });
+
+    try {
+      final appState = AppStateScope.of(context);
+
+      final nextItem = await appState.caseRepository.getNextCase(
+        myUid: appState.progress.userId,
+        solvedIds: appState.progress.solvedCaseIds,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _current = nextItem;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _loadingCase = false);
+      }
+    }
   }
 
   String _generateHint(CaseItem item) {
@@ -245,32 +173,43 @@ class _CasesScreenState extends State<CasesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = AppStateScope.of(context);
-    final isLoadingInitial = _loadedOnce && _allCases.isEmpty && _current == null;
+    final isFirstLoadSpinner = !_loadedOnce || (_loadingCase && _current == null);
 
     return Scaffold(
       appBar: const BrandedAppBar(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: isLoadingInitial
+          child: isFirstLoadSpinner
               ? const Center(child: CircularProgressIndicator())
               : (_current == null
               ? Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: const [
-                CircularProgressIndicator(),
-                SizedBox(height: 12),
-                Text(
-                  'Generating a new case…',
+              children: [
+                SizedBox(
+                  width: 220,
+                  height: 220,
+                  child: Image.asset(
+                    'assets/stojche/stojche_idle.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  "You’ve solved all available cases.\nCome back later!",
                   textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 14),
+                FilledButton(
+                  onPressed: _loadingCase ? null : _ensureCurrentCase,
+                  child: const Text('Refresh'),
                 ),
               ],
             ),
           )
-                  : ListView(
+              : ListView(
             children: [
               CasePostCard(item: _current!),
               const SizedBox(height: 12),
@@ -303,25 +242,6 @@ class _CasesScreenState extends State<CasesScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      'Streak: ${appState.sessionStreak}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                  ),
-                ),
-
                 const SizedBox(height: 12),
 
                 StojcheHintArea(

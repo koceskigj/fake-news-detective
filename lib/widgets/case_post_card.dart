@@ -80,18 +80,6 @@ class CasePostCard extends StatelessWidget {
               ],
             ),
 
-            if (item.domainHint != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                'Domain: ${item.domainHint}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: cs.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-
             const SizedBox(height: 14),
 
             Text(

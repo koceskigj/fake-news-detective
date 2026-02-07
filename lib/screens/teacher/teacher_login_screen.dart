@@ -123,13 +123,13 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
   }
 
   Future<void> _backToRolePick() async {
-    // If they got here, they picked teacher role already.
-    // We want "Back" to CLEAR the role so RoleGate shows again.
-    final appState = AppStateScope.of(context);
-    await appState.clearRoleSelection();
-
-    // Make sure teacher auth is not lingering
+    // IMPORTANT: if teacher started login, make sure we sign out any auth session
     await FirebaseAuth.instance.signOut();
+
+    if (!mounted) return;
+
+    final appState = AppStateScope.of(context);
+    await appState.logoutTeacher();
 
     if (!mounted) return;
 
@@ -138,6 +138,7 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
           (_) => false,
     );
   }
+
 
   @override
   void dispose() {

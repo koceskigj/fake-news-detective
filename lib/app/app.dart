@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -15,8 +16,14 @@ import '../screens/teacher/teacher_login_screen.dart';
 class FakeNewsDetectiveApp extends StatelessWidget {
   const FakeNewsDetectiveApp({super.key});
 
-  Future<String> _ensureAnonAuthAndGetUid() async {
+  Future<String> _ensureAuthAndGetUid() async {
     final auth = FirebaseAuth.instance;
+
+    // ✅ IMPORTANT for Chrome/Edge:
+    // Persist auth locally so the same anonymous user survives refresh / reruns.
+    if (kIsWeb) {
+      await auth.setPersistence(Persistence.LOCAL);
+    }
 
     // If nobody is signed in, sign in anonymously (students).
     if (auth.currentUser == null) {
@@ -25,22 +32,22 @@ class FakeNewsDetectiveApp extends StatelessWidget {
 
     final user = auth.currentUser;
     if (user == null) {
-      throw Exception('Auth failed: no Firebase user after anonymous sign-in.');
+      throw Exception('Auth failed: no Firebase user after sign-in.');
     }
 
     return user.uid;
   }
 
   Future<AppState> _init() async {
-    // Ensure UID (with timeout)
-    final uid = await _ensureAnonAuthAndGetUid();
+    // 1) Ensure we have a Firebase UID (anonymous by default).
+    final uid = await _ensureAuthAndGetUid();
 
-    // Load local progress
+    // 2) Load local progress (if it exists).
     final saved = await LocalStorage.loadProgressJson();
     if (saved != null) {
       var progress = UserProgress.fromJson(saved);
 
-      // Migration: align stored userId with Firebase uid
+      // 3) Migration: align stored userId with Firebase uid (needed for Firestore rules).
       if (progress.userId != uid) {
         progress = progress.copyWith(userId: uid);
         await LocalStorage.saveProgressJson(progress.toJson());
@@ -49,11 +56,11 @@ class FakeNewsDetectiveApp extends StatelessWidget {
       return AppState(progress: progress);
     }
 
-    // First run
+    // 4) First run: create progress, show role gate.
     final progress = UserProgress(
       userId: uid,
       hasOnboarded: false,
-      appMode: null, // show role gate first
+      appMode: null, // show RoleGate first
       teacherUid: null,
     );
 
@@ -61,28 +68,45 @@ class FakeNewsDetectiveApp extends StatelessWidget {
     return AppState(progress: progress);
   }
 
+  Widget _errorScreen(Object? error) {
+    String msg = error.toString();
+
+    // Make the common Firebase auth errors more human-friendly
+    if (msg.contains('operation-not-allowed') || msg.contains('OPERATION_NOT_ALLOWED')) {
+      msg =
+      'Anonymous auth is not enabled in Firebase.\n\n'
+          'Fix: Firebase Console → Authentication → Sign-in method → Enable Anonymous.\n\n'
+          'Then run again.';
+    } else if (msg.contains('network-request-failed')) {
+      msg =
+      'Network error while signing in.\n\n'
+          'Check internet, emulator network, or browser extensions/adblock.\n'
+          'Then run again.';
+    }
+
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light(),
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'App failed to start:\n\n$msg',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<AppState>(
       future: _init(),
       builder: (context, snap) {
-        if (snap.hasError) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(),
-            home: Scaffold(
-              body: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'App failed to start:\n\n${snap.error}',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }
+        if (snap.hasError) return _errorScreen(snap.error);
 
         if (!snap.hasData) {
           return MaterialApp(

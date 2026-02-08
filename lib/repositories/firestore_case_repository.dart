@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/case_item.dart';
 
 class FirestoreCaseRepository {
@@ -11,52 +12,75 @@ class FirestoreCaseRepository {
     required String myUid,
     required Set<String> solvedIds,
   }) async {
-    // 1) AI cases first
-    final ai = await _pickFromCollection(
-      collection: 'ai_cases',
+    // 1) AI cases first (public read, easy)
+    final ai = await _pickFromAiCases(
       solvedIds: solvedIds,
-      myUid: myUid,
-      requireApproved: false,
-      excludeMyOwn: false,
     );
     if (ai != null) return ai;
 
-    // 2) Then approved user cases (not created by me)
-    final user = await _pickFromCollection(
-      collection: 'user_cases',
-      solvedIds: solvedIds,
+    // 2) Then approved user cases
+    final user = await _pickFromApprovedUserCases(
       myUid: myUid,
-      requireApproved: true,
+      solvedIds: solvedIds,
       excludeMyOwn: true,
     );
     return user;
   }
 
-  Future<CaseItem?> _pickFromCollection({
-    required String collection,
+  Future<CaseItem?> _pickFromAiCases({
     required Set<String> solvedIds,
+  }) async {
+    try {
+      // AI cases are readable by everyone, ordering is fine
+      final snap = await _db
+          .collection('ai_cases')
+          .orderBy('createdAt', descending: true)
+          .limit(80)
+          .get();
+
+      final list = snap.docs
+          .map((d) => CaseItem.fromFirestore(d.id, d.data()))
+          .where((c) => !solvedIds.contains(c.id))
+          .toList();
+
+      if (list.isEmpty) return null;
+
+      list.shuffle(Random());
+      return list.first;
+    } catch (e) {
+      if (kDebugMode) debugPrint('AI query failed: $e');
+      return null;
+    }
+  }
+
+  Future<CaseItem?> _pickFromApprovedUserCases({
     required String myUid,
-    required bool requireApproved,
+    required Set<String> solvedIds,
     required bool excludeMyOwn,
   }) async {
-    Query<Map<String, dynamic>> q = _db.collection(collection);
+    try {
+      // ✅ IMPORTANT:
+      // Keep the query "status == approved" so Firestore rules allow the query.
+      // ✅ DO NOT orderBy(createdAt) here, to avoid needing a composite index.
+      final snap = await _db
+          .collection('user_cases')
+          .where('status', isEqualTo: 'approved')
+          .limit(80)
+          .get();
 
-    if (requireApproved) {
-      q = q.where('status', isEqualTo: 'approved');
+      final list = snap.docs
+          .map((d) => CaseItem.fromFirestore(d.id, d.data()))
+          .where((c) => !solvedIds.contains(c.id))
+          .where((c) => !excludeMyOwn || (c.createdBy == null || c.createdBy != myUid))
+          .toList();
+
+      if (list.isEmpty) return null;
+
+      list.shuffle(Random());
+      return list.first;
+    } catch (e) {
+      if (kDebugMode) debugPrint('Approved user_cases query failed: $e');
+      return null;
     }
-
-    // Pull a batch and filter locally (simple + thesis-friendly)
-    final snap = await q.limit(80).get();
-
-    final list = snap.docs
-        .map((d) => CaseItem.fromFirestore(d.id, d.data()))
-        .where((c) => !solvedIds.contains(c.id))
-        .where((c) => !excludeMyOwn || (c.createdBy != null && c.createdBy != myUid))
-        .toList();
-
-    if (list.isEmpty) return null;
-
-    list.shuffle(Random());
-    return list.first;
   }
 }

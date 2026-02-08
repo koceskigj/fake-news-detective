@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fake_news_detective/widgets/branded_app_bar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../state/app_state_scope.dart';
+
+import '../widgets/branded_app_bar.dart';
 
 class CreateCaseScreen extends StatefulWidget {
   const CreateCaseScreen({super.key});
@@ -20,9 +23,8 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
   final _explanation = TextEditingController();
   final _tags = TextEditingController();
 
-  bool? _isFake; // must choose
+  bool? _isFake;
   int _difficulty = 1;
-
   bool _sending = false;
 
   @override
@@ -34,6 +36,11 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
     _explanation.dispose();
     _tags.dispose();
     super.dispose();
+  }
+
+  String? _required(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Required';
+    return null;
   }
 
   List<String> _parseTags(String raw) {
@@ -60,10 +67,32 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
     });
   }
 
+  Future<User> _requireAuthedUser() async {
+    final auth = FirebaseAuth.instance;
+
+    // If not signed in, sign in anonymously
+    if (auth.currentUser == null) {
+      await auth.signInAnonymously().timeout(const Duration(seconds: 10));
+    }
+
+    // Wait until FirebaseAuth announces a valid user/token
+    final u = await auth.idTokenChanges().firstWhere((u) => u != null).timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => auth.currentUser,
+    );
+
+    if (u == null) {
+      throw Exception('Auth not ready. Please try again.');
+    }
+
+    // Small delay helps Firestore pick up the token on the write stream
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    return u;
+  }
+
   Future<void> _send() async {
     if (_sending) return;
 
-    // 1) Validate fields
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid || _isFake == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -75,12 +104,14 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
     setState(() => _sending = true);
 
     try {
-      final uid = AppStateScope.of(context).progress.userId;
+      final user = await _requireAuthedUser();
+      final uid = user.uid;
 
-      final doc = {
+      final doc = <String, dynamic>{
         'status': 'pending',
         'createdBy': uid,
         'createdAt': FieldValue.serverTimestamp(),
+
         'title': _title.text.trim(),
         'snippet': _snippet.text.trim(),
         'sourceName': _sourceName.text.trim(),
@@ -95,7 +126,6 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
 
       if (!mounted) return;
 
-      // 2) Show Stojche popup
       await showDialog(
         context: context,
         barrierDismissible: false,
@@ -111,7 +141,7 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
               ),
               const SizedBox(height: 10),
               const Text(
-                'Your case was sent to the teachers for review. '
+                'Your case was sent to the teachers for review.\n'
                     'Once approved, other students will be able to solve it.',
               ),
             ],
@@ -127,8 +157,19 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
         ),
       );
 
-      // 3) Reset to empty
       _resetForm();
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.code == 'permission-denied'
+                ? 'Permission denied. Check you published rules on the SAME Firebase project.'
+                : 'Could not send case: ${e.message ?? e.code}',
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -137,11 +178,6 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
     } finally {
       if (mounted) setState(() => _sending = false);
     }
-  }
-
-  String? _required(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Required';
-    return null;
   }
 
   @override
@@ -238,7 +274,6 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // REAL/FAKE selector
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -248,10 +283,7 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Correct answer',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
+                      const Text('Correct answer', style: TextStyle(fontWeight: FontWeight.w900)),
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -277,7 +309,6 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // Difficulty
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -287,10 +318,7 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Difficulty',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
+                      const Text('Difficulty', style: TextStyle(fontWeight: FontWeight.w900)),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<int>(
                         value: _difficulty,
@@ -300,9 +328,7 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                           DropdownMenuItem(value: 3, child: Text('3 (Hard)')),
                         ],
                         onChanged: (v) => setState(() => _difficulty = v ?? 1),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                        ),
+                        decoration: const InputDecoration(border: OutlineInputBorder()),
                       ),
                     ],
                   ),

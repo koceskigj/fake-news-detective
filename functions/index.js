@@ -1,11 +1,13 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const logger = require("firebase-functions/logger");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
 const db = admin.firestore();
 
-// ======== Helpers ========
+// ---------------------------
+// Helpers
+// ---------------------------
 async function isTeacherUid(uid) {
     const doc = await db.collection("users").doc(uid).get();
     return doc.exists && doc.data()?.role === "teacher";
@@ -16,7 +18,162 @@ function sha1Hex(input) {
     return crypto.createHash("sha1").update(input).digest("hex");
 }
 
-// ======== Groq AI ========
+// ---------------------------
+// ROUND-ROBIN ASSIGNMENT
+// Assign each new user_case to 1 teacher in a cycle
+// ---------------------------
+exports.assignUserCase = onDocumentCreated(
+    { document: "user_cases/{caseId}", region: "europe-west1" },
+    async (event) => {
+        const snap = event.data;
+        if (!snap) return;
+
+        const ref = snap.ref;
+
+        await db.runTransaction(async (tx) => {
+            const fresh = await tx.get(ref);
+            if (!fresh.exists) return;
+
+            const data = fresh.data() || {};
+
+            // Only auto-assign pending
+            if (data.status !== "pending") return;
+
+            // If already assigned, stop
+            if (data.assignedTo) return;
+
+            const teachersQuery = db.collection("users").where("role", "==", "teacher");
+            const teachersSnap = await tx.get(teachersQuery);
+
+            if (teachersSnap.empty) {
+                // no teachers; keep unassigned
+                return;
+            }
+
+            const teacherUids = teachersSnap.docs.map((d) => d.id).sort();
+
+            const metaRef = db.collection("meta").doc("assignment");
+            const metaSnap = await tx.get(metaRef);
+
+            let nextIndex = 0;
+            if (metaSnap.exists) {
+                const raw = metaSnap.data()?.nextIndex;
+                if (typeof raw === "number") nextIndex = raw % teacherUids.length;
+            }
+
+            const assignedTo = teacherUids[nextIndex];
+
+            tx.update(ref, {
+                assignedTo,
+                assignedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+
+            tx.set(
+                metaRef,
+                {
+                    nextIndex: (nextIndex + 1) % teacherUids.length,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                },
+                { merge: true }
+            );
+        });
+    }
+);
+
+// ---------------------------
+// Callable: claimUserCase (optional)
+// With round-robin, you usually DON'T need claim anymore.
+// ---------------------------
+exports.claimUserCase = onCall({ region: "europe-west1" }, async (req) => {
+    if (!req.auth) throw new HttpsError("unauthenticated", "Login required.");
+    const uid = req.auth.uid;
+
+    if (!(await isTeacherUid(uid))) {
+        throw new HttpsError("permission-denied", "Teacher only.");
+    }
+
+    const caseId = String(req.data?.caseId ?? "");
+    if (!caseId) throw new HttpsError("invalid-argument", "Missing caseId.");
+
+    const ref = db.collection("user_cases").doc(caseId);
+
+    await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists) throw new HttpsError("not-found", "Case not found.");
+
+        const data = snap.data();
+        if (data.status !== "pending") {
+            throw new HttpsError("failed-precondition", "Case is not pending.");
+        }
+
+        if (data.assignedTo && data.assignedTo !== uid) {
+            throw new HttpsError("already-exists", "Assigned to another teacher.");
+        }
+
+        if (!data.assignedTo) {
+            tx.update(ref, {
+                assignedTo: uid,
+                assignedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+        }
+    });
+
+    return { ok: true };
+});
+
+// ---------------------------
+// Callable: reviewUserCase
+// approved => status="approved"
+// rejected => DELETE the doc (your preferred approach)
+// ---------------------------
+exports.reviewUserCase = onCall({ region: "europe-west1" }, async (req) => {
+    if (!req.auth) throw new HttpsError("unauthenticated", "Login required.");
+    const uid = req.auth.uid;
+
+    if (!(await isTeacherUid(uid))) {
+        throw new HttpsError("permission-denied", "Teacher only.");
+    }
+
+    const caseId = String(req.data?.caseId ?? "");
+    const decision = String(req.data?.decision ?? ""); // "approved" | "rejected"
+    if (!caseId) throw new HttpsError("invalid-argument", "Missing caseId.");
+    if (decision !== "approved" && decision !== "rejected") {
+        throw new HttpsError("invalid-argument", "Decision must be approved/rejected.");
+    }
+
+    const ref = db.collection("user_cases").doc(caseId);
+
+    await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists) throw new HttpsError("not-found", "Case not found.");
+
+        const data = snap.data();
+
+        if (data.status !== "pending") {
+            throw new HttpsError("failed-precondition", "Case already reviewed.");
+        }
+
+        if (data.assignedTo !== uid) {
+            throw new HttpsError("permission-denied", "Not assigned to you.");
+        }
+
+        if (decision === "approved") {
+            tx.update(ref, {
+                status: "approved",
+                reviewedBy: uid,
+                reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+        } else {
+            tx.delete(ref);
+        }
+    });
+
+    return { ok: true };
+});
+
+// ---------------------------
+// Groq AI
+// ---------------------------
 async function callGroqAI({ apiKey, category, difficulty, avoidTitles }) {
     const avoidText =
         avoidTitles && avoidTitles.length
@@ -47,7 +204,6 @@ ${avoidText}
 `;
 
     const body = {
-        // IMPORTANT: pick a currently supported Groq model from your console
         model: "llama-3.3-70b-versatile",
         messages: [
             { role: "system", content: "You output ONLY JSON. No extra text." },
@@ -76,149 +232,78 @@ ${avoidText}
     return JSON.parse(content);
 }
 
-// ======== Callable: claimUserCase ========
-exports.claimUserCase = onCall(async (req) => {
-    if (!req.auth) throw new HttpsError("unauthenticated", "Login required.");
-    const uid = req.auth.uid;
-    if (!(await isTeacherUid(uid)))
-        throw new HttpsError("permission-denied", "Teacher only.");
+// ---------------------------
+// Callable: generateAIBatch
+// ---------------------------
+exports.generateAIBatch = onCall(
+    { region: "europe-west1", secrets: ["AI_API_KEY"] },
+    async (req) => {
+        if (!req.auth) throw new HttpsError("unauthenticated", "Login required.");
+        const uid = req.auth.uid;
 
-    const caseId = String(req.data?.caseId ?? "");
-    if (!caseId) throw new HttpsError("invalid-argument", "Missing caseId.");
-
-    const ref = db.collection("user_cases").doc(caseId);
-
-    await db.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        if (!snap.exists) throw new HttpsError("not-found", "Case not found.");
-
-        const data = snap.data();
-        if (data.status !== "pending") {
-            throw new HttpsError("failed-precondition", "Case is not pending.");
+        if (!(await isTeacherUid(uid))) {
+            throw new HttpsError("permission-denied", "Teacher only.");
         }
 
-        if (data.assignedTo && data.assignedTo !== uid) {
-            throw new HttpsError("already-exists", "Already claimed by another teacher.");
-        }
+        const apiKey = process.env.AI_API_KEY;
+        if (!apiKey) throw new HttpsError("failed-precondition", "Missing AI_API_KEY secret.");
 
-        if (!data.assignedTo) {
-            tx.update(ref, {
-                assignedTo: uid,
-                assignedAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
-        }
-    });
+        const count = Math.min(200, Math.max(1, Number(req.data?.count ?? 100)));
+        const category = String(req.data?.category ?? "technology");
+        const difficulty = Math.min(3, Math.max(1, Number(req.data?.difficulty ?? 2)));
 
-    return { ok: true };
-});
+        const avoidTitles = [];
 
-// ======== Callable: reviewUserCase ========
-exports.reviewUserCase = onCall(async (req) => {
-    if (!req.auth) throw new HttpsError("unauthenticated", "Login required.");
-    const uid = req.auth.uid;
-    if (!(await isTeacherUid(uid)))
-        throw new HttpsError("permission-denied", "Teacher only.");
-
-    const caseId = String(req.data?.caseId ?? "");
-    const decision = String(req.data?.decision ?? ""); // "approved" | "rejected"
-    if (!caseId) throw new HttpsError("invalid-argument", "Missing caseId.");
-    if (!(decision === "approved" || decision === "rejected")) {
-        throw new HttpsError("invalid-argument", "Decision must be approved/rejected.");
-    }
-
-    const ref = db.collection("user_cases").doc(caseId);
-
-    await db.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        if (!snap.exists) throw new HttpsError("not-found", "Case not found.");
-
-        const data = snap.data();
-        if (data.status !== "pending") {
-            throw new HttpsError("failed-precondition", "Case already reviewed.");
-        }
-        if (data.assignedTo !== uid) {
-            throw new HttpsError("permission-denied", "You must claim this case first.");
-        }
-
-        tx.update(ref, {
-            status: decision,
-            reviewedBy: uid,
-            reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
-            reviewDecision: decision,
-        });
-    });
-
-    return { ok: true };
-});
-
-// ======== Callable: generateAIBatch ========
-exports.generateAIBatch = onCall({ secrets: ["AI_API_KEY"] }, async (req) => {
-    if (!req.auth) throw new HttpsError("unauthenticated", "Login required.");
-    const uid = req.auth.uid;
-    if (!(await isTeacherUid(uid)))
-        throw new HttpsError("permission-denied", "Teacher only.");
-
-    const apiKey = process.env.AI_API_KEY;
-    if (!apiKey) throw new HttpsError("failed-precondition", "Missing AI_API_KEY secret.");
-
-    const count = Math.min(200, Math.max(1, Number(req.data?.count ?? 100)));
-    const category = String(req.data?.category ?? "technology");
-    const difficulty = Math.min(3, Math.max(1, Number(req.data?.difficulty ?? 2)));
-
-    const avoidTitles = [];
-
-    // Get last ~20 titles to reduce duplicates (optional)
-    const recent = await db.collection("ai_cases").orderBy("createdAt", "desc").limit(20).get();
-    recent.docs.forEach((d) => {
-        const t = d.data()?.title;
-        if (typeof t === "string") avoidTitles.push(t);
-    });
-
-    let created = 0;
-
-    for (let i = 0; i < count; i++) {
-        const data = await callGroqAI({
-            apiKey,
-            category,
-            difficulty,
-            avoidTitles,
-        });
-
-        const title = String(data.title ?? "").trim();
-        const snippet = String(data.snippet ?? "").trim();
-        const explanation = String(data.explanation ?? "").trim();
-
-        if (!title || !snippet || !explanation) continue;
-
-        const fp = sha1Hex((title + "|" + snippet).toLowerCase());
-
-        // Skip duplicates by fingerprint
-        const existing = await db
+        const recent = await db
             .collection("ai_cases")
-            .where("fingerprint", "==", fp)
-            .limit(1)
+            .orderBy("createdAt", "desc")
+            .limit(20)
             .get();
 
-        if (!existing.empty) continue;
-
-        const tags = Array.isArray(data.tags) ? data.tags.map(String) : [];
-        if (!tags.includes(category)) tags.push(category);
-
-        await db.collection("ai_cases").add({
-            title,
-            snippet,
-            sourceName: String(data.sourceName ?? "AI Generator"),
-            isFake: Boolean(data.isFake),
-            explanation,
-            tags,
-            difficulty,
-            domainHint: data.domainHint ? String(data.domainHint) : null,
-            fingerprint: fp,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        recent.docs.forEach((d) => {
+            const t = d.data()?.title;
+            if (typeof t === "string") avoidTitles.push(t);
         });
 
-        created++;
-    }
+        let created = 0;
 
-    return { ok: true, created };
-});
+        for (let i = 0; i < count; i++) {
+            const data = await callGroqAI({ apiKey, category, difficulty, avoidTitles });
+
+            const title = String(data.title ?? "").trim();
+            const snippet = String(data.snippet ?? "").trim();
+            const explanation = String(data.explanation ?? "").trim();
+            if (!title || !snippet || !explanation) continue;
+
+            const fp = sha1Hex((title + "|" + snippet).toLowerCase());
+
+            const existing = await db
+                .collection("ai_cases")
+                .where("fingerprint", "==", fp)
+                .limit(1)
+                .get();
+
+            if (!existing.empty) continue;
+
+            const tags = Array.isArray(data.tags) ? data.tags.map(String) : [];
+            if (!tags.includes(category)) tags.push(category);
+
+            await db.collection("ai_cases").add({
+                title,
+                snippet,
+                sourceName: String(data.sourceName ?? "AI Generator"),
+                isFake: Boolean(data.isFake),
+                explanation,
+                tags,
+                difficulty,
+                domainHint: data.domainHint ? String(data.domainHint) : null,
+                fingerprint: fp,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+
+            created++;
+        }
+
+        return { ok: true, created };
+    }
+);

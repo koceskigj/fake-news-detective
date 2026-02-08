@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/answer_record.dart';
 import '../models/case_item.dart';
@@ -49,6 +50,18 @@ class _CasesScreenState extends State<CasesScreen> {
     }
   }
 
+  /// ✅ Guarantee we have an authed user before ANY Firestore read.
+  Future<User> _ensureSignedIn() async {
+    final auth = FirebaseAuth.instance;
+    final current = auth.currentUser;
+    if (current != null) return current;
+
+    final cred = await auth.signInAnonymously().timeout(const Duration(seconds: 10));
+    final u = cred.user;
+    if (u == null) throw Exception('Anonymous sign-in failed.');
+    return u;
+  }
+
   Future<void> _ensureCurrentCase() async {
     if (_loadingCase) return;
 
@@ -62,10 +75,16 @@ class _CasesScreenState extends State<CasesScreen> {
     });
 
     try {
+      // ✅ make sure we are signed in before querying Firestore
+      final user = await _ensureSignedIn();
+
       final appState = AppStateScope.of(context);
 
+      // ✅ use FirebaseAuth uid for repo + solved list (avoids mismatch)
+      final myUid = user.uid;
+
       final nextItem = await appState.caseRepository.getNextCase(
-        myUid: appState.progress.userId,
+        myUid: myUid,
         solvedIds: appState.progress.solvedCaseIds,
       );
 
@@ -213,7 +232,6 @@ class _CasesScreenState extends State<CasesScreen> {
             children: [
               CasePostCard(item: _current!),
               const SizedBox(height: 12),
-
               if (_choice == null) ...[
                 Row(
                   children: [
@@ -243,7 +261,6 @@ class _CasesScreenState extends State<CasesScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-
                 StojcheHintArea(
                   mood: _stojcheMood,
                   hintUsed: _hintUsed,

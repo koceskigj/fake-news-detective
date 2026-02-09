@@ -233,6 +233,70 @@ ${avoidText}
 }
 
 // ---------------------------
+// Stats: recordAnswerEvent (callable)
+// Students call this after answering a case.
+// Writes an event + increments daily bucket counters.
+// ---------------------------
+function yyyymmddUTC(date = new Date()) {
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(date.getUTCDate()).padStart(2, "0");
+    return `${y}${m}${d}`;
+}
+
+exports.recordAnswerEvent = onCall({ region: "europe-west1" }, async (req) => {
+    if (!req.auth) throw new HttpsError("unauthenticated", "Login required.");
+
+    const uid = req.auth.uid;
+
+    const caseId = String(req.data?.caseId ?? "");
+    const source = String(req.data?.source ?? "unknown"); // ai_cases | user_cases
+    const bucket = Number(req.data?.bucket); // 0..3
+    const isCorrect = Boolean(req.data?.isCorrect);
+    const difficulty = Number(req.data?.difficulty ?? 1);
+    const usedHint = Boolean(req.data?.usedHint);
+
+    if (!caseId) throw new HttpsError("invalid-argument", "Missing caseId.");
+    if (![0, 1, 2, 3].includes(bucket)) {
+        throw new HttpsError("invalid-argument", "bucket must be 0..3.");
+    }
+
+    const dayId = yyyymmddUTC(new Date());
+    const statsRef = db.collection("stats").doc(`daily_${dayId}`);
+    const eventRef = db.collection("answer_events").doc();
+
+    await db.runTransaction(async (tx) => {
+        tx.set(eventRef, {
+            uid,
+            caseId,
+            source,
+            bucket,
+            isCorrect,
+            difficulty,
+            usedHint,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        tx.set(
+            statsRef,
+            {
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                b0: admin.firestore.FieldValue.increment(bucket === 0 ? 1 : 0),
+                b1: admin.firestore.FieldValue.increment(bucket === 1 ? 1 : 0),
+                b2: admin.firestore.FieldValue.increment(bucket === 2 ? 1 : 0),
+                b3: admin.firestore.FieldValue.increment(bucket === 3 ? 1 : 0),
+                total: admin.firestore.FieldValue.increment(1),
+                correct: admin.firestore.FieldValue.increment(isCorrect ? 1 : 0),
+            },
+            { merge: true }
+        );
+    });
+
+    return { ok: true };
+});
+
+
+// ---------------------------
 // Callable: generateAIBatch
 // ---------------------------
 exports.generateAIBatch = onCall(

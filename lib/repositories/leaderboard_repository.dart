@@ -3,16 +3,21 @@ import '../models/leaderboard_entry.dart';
 import '../models/user_progress.dart';
 
 class LeaderboardRepository {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db;
+  LeaderboardRepository({FirebaseFirestore? db}) : _db = db ?? FirebaseFirestore.instance;
 
-  CollectionReference<Map<String, dynamic>> get _col =>
-      _db.collection('leaderboard');
+  CollectionReference<Map<String, dynamic>> get _col => _db.collection('leaderboard');
 
-  Future<void> upsertFromProgress(UserProgress p) async {
-    // Using your local userId as the doc id (MVP)
-    final doc = _col.doc(p.userId);
+  /// IMPORTANT:
+  /// Firestore rules require:
+  /// match /leaderboard/{uid} { allow create, update: if request.auth.uid == uid; }
+  ///
+  /// So docId MUST be FirebaseAuth.uid (not your local progress.userId).
+  Future<void> upsertFromProgress(UserProgress p, {required String uid}) async {
+    final doc = _col.doc(uid);
+
     final entry = LeaderboardEntry(
-      userId: p.userId,
+      userId: uid, // store auth uid here (consistent + useful)
       displayName: p.displayName,
       avatarKey: p.avatarKey,
       xp: p.xp,
@@ -20,6 +25,7 @@ class LeaderboardRepository {
       bestDailyStreak: p.bestDailyStreak,
       bestPerfectStreak: p.bestPerfectStreak,
     );
+
     await doc.set(entry.toMap(), SetOptions(merge: true));
   }
 

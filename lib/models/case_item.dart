@@ -25,6 +25,13 @@ class CaseItem {
     this.status,
   });
 
+  /// Derived: used for analytics / stats logging
+  String get sourceCollection {
+    // If it has createdBy or status, it's a user_cases doc
+    if (createdBy != null || status != null) return 'user_cases';
+    return 'ai_cases';
+  }
+
   factory CaseItem.fromFirestore(String id, Map<String, dynamic> data) {
     return CaseItem(
       id: id,
@@ -33,7 +40,7 @@ class CaseItem {
       sourceName: (data['sourceName'] ?? '') as String,
       isFake: (data['isFake'] ?? false) as bool,
       explanation: (data['explanation'] ?? '') as String,
-      difficulty: (data['difficulty'] ?? 1 as int) is int
+      difficulty: (data['difficulty'] ?? 1) is int
           ? data['difficulty'] as int
           : (data['difficulty'] as num).toInt(),
       tags: ((data['tags'] as List?) ?? const []).map((e) => e.toString()).toList(),

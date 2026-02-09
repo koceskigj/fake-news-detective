@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 import '../data/achievements_catalog.dart';
 import '../models/achievement.dart';
@@ -9,6 +11,9 @@ import '../models/user_progress.dart';
 import '../repositories/firestore_case_repository.dart';
 import '../repositories/leaderboard_repository.dart';
 import '../services/local_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class AppState extends ChangeNotifier {
   final UserProgress progress;
@@ -45,13 +50,103 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  // ----------------------------
+  // Auth helpers
+  // ----------------------------
+
+  /// Ensure we have a Firebase user (anonymous is fine for students)
+  Future<User?> _ensureAuthedUser() async {
+    final auth = FirebaseAuth.instance;
+    final u = auth.currentUser;
+    if (u != null) return u;
+
+    try {
+      final cred = await auth.signInAnonymously().timeout(const Duration(seconds: 10));
+      return cred.user;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  int _timeBucketFromHour(int hour) {
+    // Your desired buckets:
+    // 1AM-7AM, 7AM-1PM, 1PM-7PM, 7PM-1AM
+    // We'll use:
+    // [1..6] => b0
+    // [7..12] => b1
+    // [13..18] => b2
+    // [19..23] and 0 => b3
+    if (hour >= 1 && hour <= 6) return 0;
+    if (hour >= 7 && hour <= 12) return 1;
+    if (hour >= 13 && hour <= 18) return 2;
+    return 3;
+  }
+
+  /// Fire-and-forget: store an "answer event" to backend (for stats charts).
+  Future<void> _recordAnswerEvent({
+    required String caseId,
+    required bool isCorrect,
+    required int difficulty,
+    required bool usedHint,
+    required AnswerChoice userChoice,
+    required CaseItem item,
+    required DateTime now,
+  }) async {
+    final authUid = FirebaseAuth.instance.currentUser?.uid;
+
+    // If you ever call this while signed out, skip logging safely.
+    if (authUid == null) return;
+
+    // 4 buckets:
+    // 01–06 => night, 07–12 => morning, 13–18 => afternoon, 19–00 => evening
+    final h = now.hour;
+    String bucket;
+    if (h >= 1 && h < 7) {
+      bucket = 'night';
+    } else if (h >= 7 && h < 13) {
+      bucket = 'morning';
+    } else if (h >= 13 && h < 19) {
+      bucket = 'afternoon';
+    } else {
+      bucket = 'evening'; // includes 19–23 and 00
+    }
+
+    final caseType = (item.status != null) ? 'user_case' : 'ai_case';
+
+    await FirebaseFirestore.instance.collection('answer_events').add({
+      'userUid': authUid,
+      'caseId': caseId,
+      'caseType': caseType,
+
+      'isCorrect': isCorrect,
+      'userChoice': userChoice.name, // "real"/"fake"
+      'difficulty': difficulty,
+      'usedHint': usedHint,
+
+      // Time fields
+      'answeredAt': FieldValue.serverTimestamp(), // canonical
+      'hourLocal': h,
+      'bucket': bucket,
+
+      // Optional, useful for later filters
+      'tags': item.tags,
+      'createdBy': item.createdBy, // null for ai cases
+    });
+  }
+
+
   /// Local save is awaited; Firestore sync is NOT awaited (so UI stays smooth).
   Future<void> _save() async {
     try {
       await LocalStorage.saveProgressJson(progress.toJson());
 
-      // Fire-and-forget leaderboard sync (avoid blocking UI)
-      _leaderboardRepo.upsertFromProgress(progress).catchError((_) {});
+      // ✅ IMPORTANT:
+      // Leaderboard rules require docId == FirebaseAuth.uid.
+      // So only sync leaderboard if we have an authed Firebase user.
+      final authUid = FirebaseAuth.instance.currentUser?.uid;
+      if (authUid != null) {
+        _leaderboardRepo.upsertFromProgress(progress, uid: authUid).catchError((_) {});
+      }
     } catch (e) {
       if (kDebugMode) debugPrint('Save failed: $e');
     }
@@ -145,7 +240,6 @@ class AppState extends ChangeNotifier {
     progress.lastOpenDate = t;
 
     if (last == null) {
-      // first open
       if (progress.dailyStreak == 0) progress.dailyStreak = 1;
       if (progress.dailyStreak > progress.bestDailyStreak) {
         progress.bestDailyStreak = progress.dailyStreak;
@@ -155,7 +249,6 @@ class AppState extends ChangeNotifier {
       return;
     }
 
-    // same calendar day
     if (_dateKey(last) == _dateKey(t)) {
       notifyListeners();
       await _save();
@@ -168,7 +261,6 @@ class AppState extends ChangeNotifier {
     } else if (diffDays > 1) {
       progress.dailyStreak = 1;
     } else {
-      // clock went backwards, ignore
       notifyListeners();
       await _save();
       return;
@@ -178,7 +270,6 @@ class AppState extends ChangeNotifier {
       progress.bestDailyStreak = progress.dailyStreak;
     }
 
-    // Queue celebration (shown in your celebration flow)
     _pendingDailyStreakEvent =
         CelebrationEvent.dailyStreakUpdated(progress.dailyStreak);
 
@@ -189,6 +280,7 @@ class AppState extends ChangeNotifier {
   // ----------------------------
   // Gameplay + achievements
   // ----------------------------
+
 
   Future<List<CelebrationEvent>> recordCaseSolved({
     required String caseId,
@@ -241,7 +333,6 @@ class AppState extends ChangeNotifier {
 
       int xpGain = xpForDifficulty(difficulty);
 
-      // Hint penalty: /3 rounded, min 1
       if (usedHint) {
         xpGain = (xpGain / 3).round();
         if (xpGain < 1) xpGain = 1;
@@ -272,8 +363,21 @@ class AppState extends ChangeNotifier {
 
     notifyListeners();
     await _save();
+
+    // ✅ Fire-and-forget stats logging (never blocks UI)
+    _recordAnswerEvent(
+      caseId: caseId,
+      isCorrect: isCorrect,
+      difficulty: difficulty,
+      usedHint: usedHint,
+      userChoice: userChoice,
+      item: item,
+      now: t,
+    ).catchError((_) {});
+
     return events;
   }
+
 
   int _valueForCriteria(AchievementCriteria c) {
     switch (c.type) {
@@ -311,8 +415,6 @@ class AppState extends ChangeNotifier {
   // Reset + logout
   // ----------------------------
 
-  /// Keeps same userId but resets progress,
-  /// and forces RoleGate + onboarding again.
   Future<void> resetProgress() async {
     await LocalStorage.clearAll();
 
@@ -333,12 +435,10 @@ class AppState extends ChangeNotifier {
     progress.achievementUnlockedAt.clear();
     progress.recentAnswers.clear();
 
-    // Reset profile basics + onboarding
     progress.displayName = 'Guest Detective';
     progress.avatarKey = 'monkey';
     progress.hasOnboarded = false;
 
-    // ✅ Force role choice again
     progress.appMode = null;
     progress.teacherUid = null;
 
@@ -347,10 +447,13 @@ class AppState extends ChangeNotifier {
     notifyListeners();
 
     await LocalStorage.saveProgressJson(progress.toJson());
-    _leaderboardRepo.upsertFromProgress(progress).catchError((_) {});
+
+    final authUid = FirebaseAuth.instance.currentUser?.uid;
+    if (authUid != null) {
+      _leaderboardRepo.upsertFromProgress(progress, uid: authUid).catchError((_) {});
+    }
   }
 
-  /// Teacher logout: clears teacher UID and forces RoleGate again.
   Future<void> logoutTeacher() async {
     progress.teacherUid = null;
     progress.appMode = null;

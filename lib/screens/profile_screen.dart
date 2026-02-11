@@ -1,9 +1,11 @@
-import 'package:fake_news_detective/screens/stats_screen.dart';
 import 'package:flutter/material.dart';
+
+import 'package:fake_news_detective/screens/stats_screen.dart';
+import 'package:fake_news_detective/screens/student_settings_screen.dart';
+
+import '../l10n/app_localizations.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
-
-// ✅ role gate (adjust path/name if yours differs)
 import '../screens/role_gate/role_gate_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,14 +16,13 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // Fake avatars (icon-based)
   static const List<_AvatarOption> _avatars = [
-    _AvatarOption(keyName: 'monkey', label: 'Stojche', icon: Icons.emoji_nature),
-    _AvatarOption(keyName: 'detective', label: 'Detective', icon: Icons.manage_search),
-    _AvatarOption(keyName: 'owl', label: 'Owl', icon: Icons.visibility),
-    _AvatarOption(keyName: 'robot', label: 'Robot', icon: Icons.smart_toy_outlined),
-    _AvatarOption(keyName: 'fox', label: 'Fox', icon: Icons.pets_outlined),
-    _AvatarOption(keyName: 'star', label: 'Star', icon: Icons.star_outline),
+    _AvatarOption(keyName: 'monkey', labelKey: 'avatarStojche', fallback: 'Stojche', icon: Icons.emoji_nature),
+    _AvatarOption(keyName: 'detective', labelKey: 'avatarDetective', fallback: 'Detective', icon: Icons.manage_search),
+    _AvatarOption(keyName: 'owl', labelKey: 'avatarOwl', fallback: 'Owl', icon: Icons.visibility),
+    _AvatarOption(keyName: 'robot', labelKey: 'avatarRobot', fallback: 'Robot', icon: Icons.smart_toy_outlined),
+    _AvatarOption(keyName: 'fox', labelKey: 'avatarFox', fallback: 'Fox', icon: Icons.pets_outlined),
+    _AvatarOption(keyName: 'star', labelKey: 'avatarStar', fallback: 'Star', icon: Icons.star_outline),
   ];
 
   IconData _iconForAvatarKey(String key) {
@@ -31,7 +32,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ).icon;
   }
 
+  String _avatarLabel(BuildContext context, _AvatarOption a) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (a.labelKey) {
+      case 'avatarStojche':
+        return l10n.avatarStojche;
+      case 'avatarDetective':
+        return l10n.avatarDetective;
+      case 'avatarOwl':
+        return l10n.avatarOwl;
+      case 'avatarRobot':
+        return l10n.avatarRobot;
+      case 'avatarFox':
+        return l10n.avatarFox;
+      case 'avatarStar':
+        return l10n.avatarStar;
+      default:
+        return a.fallback;
+    }
+  }
+
   Future<void> _showUsernameSheet() async {
+    final l10n = AppLocalizations.of(context)!;
     final current = AppStateScope.of(context).progress.displayName;
 
     final String? newName = await showModalBottomSheet<String>(
@@ -53,9 +75,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Change username',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                Text(
+                  l10n.changeUsername,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 10),
                 TextField(
@@ -63,10 +85,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   autofocus: true,
                   textInputAction: TextInputAction.done,
                   maxLength: 20,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                    hintText: 'e.g., detective123',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.usernameLabel,
+                    hintText: l10n.usernameHint,
+                    border: const OutlineInputBorder(),
                   ),
                   onSubmitted: (_) {
                     final name = controller.text.trim();
@@ -80,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: TextButton(
                         onPressed: () => Navigator.pop(sheetContext),
-                        child: const Text('Cancel'),
+                        child: Text(l10n.cancel),
                       ),
                     ),
                     Expanded(
@@ -90,7 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           if (name.isEmpty) return;
                           Navigator.pop(sheetContext, name);
                         },
-                        child: const Text('Save'),
+                        child: Text(l10n.save),
                       ),
                     ),
                   ],
@@ -112,6 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _showAvatarSheet() async {
+    final l10n = AppLocalizations.of(context)!;
     final appState = AppStateScope.of(context);
     final currentKey = appState.progress.avatarKey;
 
@@ -124,11 +147,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Choose avatar',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  l10n.chooseAvatar,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                 ),
               ),
               const SizedBox(height: 12),
@@ -161,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                a.label,
+                                _avatarLabel(context, a),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -170,9 +193,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ),
                               if (selected)
-                                const Padding(
-                                  padding: EdgeInsets.only(top: 4),
-                                  child: Text('Selected', style: TextStyle(fontSize: 11)),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(l10n.selected, style: const TextStyle(fontSize: 11)),
                                 ),
                             ],
                           ),
@@ -197,23 +220,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _confirmAndReset(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final appState = AppStateScope.of(context);
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Reset progress?'),
-        content: const Text(
-          'This will erase your XP, levels, achievements, streaks, and case history on this device.\n\nYou can’t undo this.',
-        ),
+        title: Text(l10n.resetProgressTitle),
+        content: Text(l10n.resetProgressBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reset'),
+            child: Text(l10n.reset),
           ),
         ],
       ),
@@ -224,7 +246,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await appState.resetProgress();
     if (!context.mounted) return;
 
-    // ✅ After reset, go to Role selection (NOT onboarding)
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const RoleGateScreen()),
           (route) => false,
@@ -233,11 +254,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final appState = AppStateScope.of(context);
     final p = appState.progress;
 
     return Scaffold(
-      appBar: const BrandedAppBar(),
+      appBar: BrandedAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -261,8 +283,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               runSpacing: 10,
               alignment: WrapAlignment.center,
               children: [
-                _StatChip(label: 'Level', value: '${p.level}'),
-                _StatChip(label: 'XP', value: '${p.xp}'),
+                _StatChip(label: l10n.level, value: '${p.level}'),
+                _StatChip(label: l10n.xp, value: '${p.xp}'),
               ],
             ),
 
@@ -271,27 +293,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.edit_outlined),
-                title: const Text('Change username'),
-                subtitle: const Text('What should we call you?'),
+                title: Text(l10n.changeUsername),
+                subtitle: Text(l10n.changeUsernameSubtitle),
                 onTap: _showUsernameSheet,
               ),
             ),
             Card(
               child: ListTile(
                 leading: const Icon(Icons.face_retouching_natural_outlined),
-                title: const Text('Choose avatar'),
-                subtitle: const Text('Pick your detective style'),
+                title: Text(l10n.chooseAvatar),
+                subtitle: Text(l10n.chooseAvatarSubtitle),
                 onTap: _showAvatarSheet,
               ),
             ),
             Card(
               child: ListTile(
                 leading: const Icon(Icons.settings_outlined),
-                title: const Text('Settings'),
-                subtitle: const Text('Language, sound, etc. (later)'),
+                title: Text(l10n.settings),
+                subtitle: Text(l10n.settingsSubtitle),
+                trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Settings coming soon ✅')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const StudentSettingsScreen()),
                   );
                 },
               ),
@@ -299,8 +323,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.bar_chart_outlined),
-                title: const Text('Stats'),
-                subtitle: const Text('All-time progress and records'),
+                title: Text(l10n.stats),
+                subtitle: Text(l10n.statsSubtitle),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.push(
@@ -316,8 +340,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.restart_alt),
-                title: const Text('Reset progress'),
-                subtitle: const Text('Start over on this device'),
+                title: Text(l10n.resetProgressTitle),
+                subtitle: Text(l10n.resetProgressSubtitle),
                 onTap: () => _confirmAndReset(context),
               ),
             ),
@@ -357,12 +381,14 @@ class _StatChip extends StatelessWidget {
 
 class _AvatarOption {
   final String keyName;
-  final String label;
+  final String labelKey;
+  final String fallback;
   final IconData icon;
 
   const _AvatarOption({
     required this.keyName,
-    required this.label,
+    required this.labelKey,
+    required this.fallback,
     required this.icon,
   });
 }

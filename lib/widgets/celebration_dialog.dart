@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
+
 import '../data/achievements_catalog.dart';
+import '../l10n/app_localizations.dart';
 import '../models/celebration_event.dart';
 
 class CelebrationDialog extends StatelessWidget {
@@ -10,6 +13,7 @@ class CelebrationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     final bool isAchievement =
         event.type == CelebrationEventType.achievementUnlocked;
@@ -24,22 +28,22 @@ class CelebrationDialog extends StatelessWidget {
     const dailyStreakAsset = 'assets/achievements/leveling_up.png';
 
     if (isLevelUp) {
-      headerText = 'Level Up!';
-      line2 = 'You are now Level ${event.newLevel} 🎉';
+      headerText = l10n.celebrationLevelUpTitle;
+      line2 = l10n.celebrationNowLevel(event.newLevel!);
       mainImageAsset = levelUpAsset;
     } else if (isDaily) {
-      headerText = 'Daily Streak!';
-      line2 = 'Streak continued: ${event.newDailyStreak} day(s) 📅';
+      headerText = l10n.celebrationDailyStreakTitle;
+      line2 = l10n.celebrationDailyStreakLine(event.newDailyStreak!);
+
       mainImageAsset = dailyStreakAsset;
     } else {
-      // Achievement unlocked
       final ach = achievementsCatalog.firstWhere(
             (a) => a.id == event.achievementId,
         orElse: () => achievementsCatalog.first,
       );
 
-      headerText = 'Achievement Unlocked!';
-      line2 = 'You unlocked "${ach.title}"';
+      headerText = l10n.celebrationAchievementUnlockedTitle;
+      line2 = l10n.celebrationUnlockedAchievement(ach.title);
       mainImageAsset = 'assets/achievements/${ach.iconKey}.png';
     }
 
@@ -53,22 +57,18 @@ class CelebrationDialog extends StatelessWidget {
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           backgroundColor: cs.surface,
-
           titlePadding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
           contentPadding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
           actionsPadding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
-
           title: Text(
             headerText,
             style: const TextStyle(fontWeight: FontWeight.w900),
           ),
-
           content: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 360),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ✅ Main image for all event types
                 if (mainImageAsset != null) ...[
                   Center(
                     child: SizedBox(
@@ -91,11 +91,10 @@ class CelebrationDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                 ],
-
-                const Text(
-                  'Congratulations detective!',
+                Text(
+                  l10n.celebrationCongratsDetective,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -107,19 +106,17 @@ class CelebrationDialog extends StatelessWidget {
                     height: 1.25,
                   ),
                 ),
-
                 const SizedBox(height: 12),
               ],
             ),
           ),
-
           actions: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 FilledButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Continue'),
+                  child: Text(l10n.continueBtn),
                 ),
               ],
             ),

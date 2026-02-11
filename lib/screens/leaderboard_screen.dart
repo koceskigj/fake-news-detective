@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/leaderboard_entry.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
@@ -30,15 +30,15 @@ class LeaderboardScreen extends StatelessWidget {
 
   Future<int?> _loadMyRank(LeaderboardEntry me) async {
     final q = _col.where('xp', isGreaterThan: me.xp);
-
     final agg = await q.count().get().timeout(const Duration(seconds: 6));
     final above = agg.count ?? 0;
-
     return above + 1;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final appState = AppStateScope.of(context);
     final myId = appState.progress.userId;
 
@@ -48,11 +48,11 @@ class LeaderboardScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Leaderboard',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                l10n.leaderboardTitle,
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
               ),
             ),
             const SizedBox(height: 10),
@@ -63,7 +63,7 @@ class LeaderboardScreen extends StatelessWidget {
                 builder: (context, topSnap) {
                   if (topSnap.hasError) {
                     return Center(
-                      child: Text('Leaderboard error: ${topSnap.error}'),
+                      child: Text(l10n.leaderboardError(topSnap.error.toString())),
                     );
                   }
                   if (!topSnap.hasData) {
@@ -72,7 +72,7 @@ class LeaderboardScreen extends StatelessWidget {
 
                   final top = topSnap.data!;
                   if (top.isEmpty) {
-                    return const Center(child: Text('No leaderboard entries yet.'));
+                    return Center(child: Text(l10n.leaderboardEmpty));
                   }
 
                   final inTop20 = top.any((e) => e.userId == myId);
@@ -101,19 +101,19 @@ class LeaderboardScreen extends StatelessWidget {
                             const SizedBox(height: 10),
 
                             if (meSnap.hasError)
-                              const Card(
+                              Card(
                                 child: ListTile(
-                                  leading: Icon(Icons.info_outline),
-                                  title: Text('Could not load your entry'),
-                                  subtitle: Text('Try again later.'),
+                                  leading: const Icon(Icons.info_outline),
+                                  title: Text(l10n.leaderboardMeLoadFailTitle),
+                                  subtitle: Text(l10n.leaderboardTryLater),
                                 ),
                               )
                             else if (me == null)
-                              const Card(
+                              Card(
                                 child: ListTile(
-                                  leading: Icon(Icons.info_outline),
-                                  title: Text('Your score is not uploaded yet.'),
-                                  subtitle: Text('Play a case to sync your XP to the leaderboard.'),
+                                  leading: const Icon(Icons.info_outline),
+                                  title: Text(l10n.leaderboardNotUploadedTitle),
+                                  subtitle: Text(l10n.leaderboardNotUploadedSubtitle),
                                 ),
                               )
                             else
@@ -121,24 +121,24 @@ class LeaderboardScreen extends StatelessWidget {
                                 future: _loadMyRank(me),
                                 builder: (context, rankSnap) {
                                   if (rankSnap.hasError) {
-                                    return const Card(
+                                    return Card(
                                       child: ListTile(
-                                        leading: Icon(Icons.info_outline),
-                                        title: Text('Rank unavailable right now'),
-                                        subtitle: Text('Try again later.'),
+                                        leading: const Icon(Icons.info_outline),
+                                        title: Text(l10n.leaderboardRankUnavailableTitle),
+                                        subtitle: Text(l10n.leaderboardTryLater),
                                       ),
                                     );
                                   }
 
                                   if (!rankSnap.hasData) {
-                                    return const Card(
+                                    return Card(
                                       child: ListTile(
-                                        leading: SizedBox(
+                                        leading: const SizedBox(
                                           width: 18,
                                           height: 18,
                                           child: CircularProgressIndicator(strokeWidth: 2),
                                         ),
-                                        title: Text('Loading your rank…'),
+                                        title: Text(l10n.leaderboardLoadingRank),
                                       ),
                                     );
                                   }
@@ -223,14 +223,15 @@ class _LeaderboardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
+
     final bg = highlight ? cs.primaryContainer : null;
     final fg = highlight ? cs.onPrimaryContainer : null;
 
     return Card(
       color: bg,
       child: ListTile(
-        //Avatar on the left
         leading: CircleAvatar(
           backgroundColor: highlight
               ? cs.onPrimaryContainer.withOpacity(0.15)
@@ -240,7 +241,6 @@ class _LeaderboardRow extends StatelessWidget {
             color: highlight ? cs.onPrimaryContainer : cs.onSecondaryContainer,
           ),
         ),
-
         title: Text(
           entry.displayName,
           style: TextStyle(
@@ -249,10 +249,8 @@ class _LeaderboardRow extends StatelessWidget {
           ),
           overflow: TextOverflow.ellipsis,
         ),
-
-        //XP + Level
         subtitle: Text(
-          'XP ${entry.xp} • Level ${entry.level}',
+          l10n.leaderboardXpLevel(entry.xp, entry.level),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
@@ -260,8 +258,6 @@ class _LeaderboardRow extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-
-        // Rank on the right only
         trailing: Text(
           rankText,
           style: TextStyle(
@@ -273,4 +269,3 @@ class _LeaderboardRow extends StatelessWidget {
     );
   }
 }
-

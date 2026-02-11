@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/case_item.dart';
 import '../../widgets/case_post_card.dart';
 import '../../widgets/speech_bubble.dart';
@@ -43,33 +44,32 @@ class _TeacherModerationScreenState extends State<TeacherModerationScreen> {
         'caseId': caseId,
         'decision': decision,
       });
-
-      // Stream updates automatically:
-      // - approved => status changes, disappears from pending
-      // - rejected => doc deleted, disappears
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
+
+      final l10n = AppLocalizations.of(context)!;
 
       String msg;
       switch (e.code) {
         case 'permission-denied':
-          msg = 'No permission. This case may not be assigned to you.';
+          msg = l10n.teacherModerationErrNoPermission;
           break;
         case 'failed-precondition':
-          msg = 'This case was already reviewed by someone else.';
+          msg = l10n.teacherModerationErrAlreadyReviewed;
           break;
         case 'not-found':
-          msg = 'This case no longer exists.';
+          msg = l10n.teacherModerationErrNotFound;
           break;
         default:
-          msg = e.message ?? 'Action failed.';
+          msg = e.message ?? l10n.teacherModerationErrGeneric;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Action failed: $e')),
+        SnackBar(content: Text(l10n.teacherModerationErrActionFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _working = false);
@@ -78,6 +78,7 @@ class _TeacherModerationScreenState extends State<TeacherModerationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
 
     return SafeArea(
@@ -85,7 +86,7 @@ class _TeacherModerationScreenState extends State<TeacherModerationScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Header: monkey + speech bubble
+            // Header: Stojche + speech bubble
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -100,8 +101,7 @@ class _TeacherModerationScreenState extends State<TeacherModerationScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: SpeechBubble(
-                    text: 'Approve good cases so students can play them.\n'
-                        'Decline low quality ones.',
+                    text: l10n.teacherModerationBubble,
                     backgroundColor: cs.secondaryContainer,
                     textColor: cs.onSecondaryContainer,
                   ),
@@ -118,8 +118,9 @@ class _TeacherModerationScreenState extends State<TeacherModerationScreen> {
                   if (snap.hasError) {
                     return Center(
                       child: Text(
-                        'Moderation error: ${snap.error}\n\n'
-                            'If it says “requires an index”, create the index in Firestore console.',
+                        l10n.teacherModerationStreamError(
+                          '${snap.error}',
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     );
@@ -134,7 +135,7 @@ class _TeacherModerationScreenState extends State<TeacherModerationScreen> {
                   if (docs.isEmpty) {
                     return Center(
                       child: Text(
-                        'No cases assigned right now.\nCome back later.',
+                        l10n.teacherModerationEmpty,
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           color: cs.onSurfaceVariant,
@@ -163,7 +164,7 @@ class _TeacherModerationScreenState extends State<TeacherModerationScreen> {
                                 decision: 'approved',
                               ),
                               icon: const Icon(Icons.check_circle_outline),
-                              label: const Text('Approve'),
+                              label: Text(l10n.teacherModerationApprove),
                               style: FilledButton.styleFrom(
                                 backgroundColor: const Color(0xFFE6F4EA),
                                 foregroundColor: const Color(0xFF1E7F43),
@@ -187,7 +188,7 @@ class _TeacherModerationScreenState extends State<TeacherModerationScreen> {
                                 decision: 'rejected',
                               ),
                               icon: const Icon(Icons.cancel_outlined),
-                              label: const Text('Decline'),
+                              label: Text(l10n.teacherModerationDecline),
                               style: FilledButton.styleFrom(
                                 backgroundColor: const Color(0xFFFDEAEA),
                                 foregroundColor: const Color(0xFFB3261E),

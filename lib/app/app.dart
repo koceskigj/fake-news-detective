@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import 'home_shell.dart';
 import '../models/user_progress.dart';
@@ -13,19 +14,19 @@ import '../screens/onboarding/onboarding_flow.dart';
 import '../screens/role_gate/role_gate_screen.dart';
 import '../screens/teacher/teacher_login_screen.dart';
 
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+
 class FakeNewsDetectiveApp extends StatelessWidget {
   const FakeNewsDetectiveApp({super.key});
 
   Future<String> _ensureAuthAndGetUid() async {
     final auth = FirebaseAuth.instance;
 
-    // ✅ IMPORTANT for Chrome/Edge:
-    // Persist auth locally so the same anonymous user survives refresh / reruns.
     if (kIsWeb) {
       await auth.setPersistence(Persistence.LOCAL);
     }
 
-    // If nobody is signed in, sign in anonymously (students).
     if (auth.currentUser == null) {
       await auth.signInAnonymously().timeout(const Duration(seconds: 10));
     }
@@ -39,15 +40,12 @@ class FakeNewsDetectiveApp extends StatelessWidget {
   }
 
   Future<AppState> _init() async {
-    // 1) Ensure we have a Firebase UID (anonymous by default).
     final uid = await _ensureAuthAndGetUid();
 
-    // 2) Load local progress (if it exists).
     final saved = await LocalStorage.loadProgressJson();
     if (saved != null) {
       var progress = UserProgress.fromJson(saved);
 
-      // 3) Migration: align stored userId with Firebase uid (needed for Firestore rules).
       if (progress.userId != uid) {
         progress = progress.copyWith(userId: uid);
         await LocalStorage.saveProgressJson(progress.toJson());
@@ -56,12 +54,13 @@ class FakeNewsDetectiveApp extends StatelessWidget {
       return AppState(progress: progress);
     }
 
-    // 4) First run: create progress, show role gate.
     final progress = UserProgress(
       userId: uid,
       hasOnboarded: false,
-      appMode: null, // show RoleGate first
+      appMode: null,
       teacherUid: null,
+      studentLocale: null,
+      teacherLocale: null,
     );
 
     await LocalStorage.saveProgressJson(progress.toJson());
@@ -71,7 +70,6 @@ class FakeNewsDetectiveApp extends StatelessWidget {
   Widget _errorScreen(Object? error) {
     String msg = error.toString();
 
-    // Make the common Firebase auth errors more human-friendly
     if (msg.contains('operation-not-allowed') || msg.contains('OPERATION_NOT_ALLOWED')) {
       msg =
       'Anonymous auth is not enabled in Firebase.\n\n'
@@ -119,25 +117,47 @@ class FakeNewsDetectiveApp extends StatelessWidget {
         }
 
         final appState = snap.data!;
-        Widget home;
-
-        if (appState.progress.appMode == null) {
-          home = const RoleGateScreen();
-        } else if (appState.progress.appMode == 'teacher') {
-          home = const TeacherLoginScreen();
-        } else {
-          home = appState.progress.hasOnboarded
-              ? const HomeShell()
-              : const OnboardingFlow();
-        }
 
         return AppStateScope(
           state: appState,
-          child: MaterialApp(
-            title: 'Fake News Detective',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(),
-            home: home,
+          child: Builder(
+            builder: (context) {
+              final state = AppStateScope.of(context);
+
+              Widget home;
+              if (state.progress.appMode == null) {
+                home = const RoleGateScreen();
+              } else if (state.progress.appMode == 'teacher') {
+                home = const TeacherLoginScreen();
+              } else {
+                home = state.progress.hasOnboarded ? const HomeShell() : const OnboardingFlow();
+              }
+
+              return MaterialApp(
+                title: 'Fake News Detective',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.light(),
+
+                // ✅ Your chosen language:
+                locale: Locale(state.activeLocaleCode),
+
+                // ✅ Supported languages:
+                supportedLocales: const [
+                  Locale('en'),
+                  Locale('mk'),
+                ],
+
+                // ✅ Generated + Flutter delegates:
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+
+                home: home,
+              );
+            },
           ),
         );
       },

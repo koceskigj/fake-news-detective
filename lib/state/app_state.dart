@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-
 import '../data/achievements_catalog.dart';
 import '../models/achievement.dart';
 import '../models/answer_record.dart';
@@ -11,9 +10,6 @@ import '../models/user_progress.dart';
 import '../repositories/firestore_case_repository.dart';
 import '../repositories/leaderboard_repository.dart';
 import '../services/local_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
 
 class AppState extends ChangeNotifier {
   final UserProgress progress;
@@ -51,6 +47,30 @@ class AppState extends ChangeNotifier {
   }
 
   // ----------------------------
+  // ✅ Locale settings (student/teacher separate)
+  // ----------------------------
+
+  String get studentLocaleCode => (progress.studentLocale ?? 'en');
+  String get teacherLocaleCode => (progress.teacherLocale ?? 'en');
+
+  /// Which locale should the app use RIGHT NOW
+  String get activeLocaleCode => isTeacherMode ? teacherLocaleCode : studentLocaleCode;
+
+  Future<void> setStudentLocale(String code) async {
+    if (code != 'en' && code != 'mk') return;
+    progress.studentLocale = code;
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> setTeacherLocale(String code) async {
+    if (code != 'en' && code != 'mk') return;
+    progress.teacherLocale = code;
+    notifyListeners();
+    await _save();
+  }
+
+  // ----------------------------
   // Auth helpers
   // ----------------------------
 
@@ -68,21 +88,10 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  int _timeBucketFromHour(int hour) {
-    // Your desired buckets:
-    // 1AM-7AM, 7AM-1PM, 1PM-7PM, 7PM-1AM
-    // We'll use:
-    // [1..6] => b0
-    // [7..12] => b1
-    // [13..18] => b2
-    // [19..23] and 0 => b3
-    if (hour >= 1 && hour <= 6) return 0;
-    if (hour >= 7 && hour <= 12) return 1;
-    if (hour >= 13 && hour <= 18) return 2;
-    return 3;
-  }
+  // ----------------------------
+  // Stats logging
+  // ----------------------------
 
-  /// Fire-and-forget: store an "answer event" to backend (for stats charts).
   Future<void> _recordAnswerEvent({
     required String caseId,
     required bool isCorrect,
@@ -93,12 +102,8 @@ class AppState extends ChangeNotifier {
     required DateTime now,
   }) async {
     final authUid = FirebaseAuth.instance.currentUser?.uid;
-
-    // If you ever call this while signed out, skip logging safely.
     if (authUid == null) return;
 
-    // 4 buckets:
-    // 01–06 => night, 07–12 => morning, 13–18 => afternoon, 19–00 => evening
     final h = now.hour;
     String bucket;
     if (h >= 1 && h < 7) {
@@ -108,7 +113,7 @@ class AppState extends ChangeNotifier {
     } else if (h >= 13 && h < 19) {
       bucket = 'afternoon';
     } else {
-      bucket = 'evening'; // includes 19–23 and 00
+      bucket = 'evening';
     }
 
     final caseType = (item.status != null) ? 'user_case' : 'ai_case';
@@ -117,32 +122,24 @@ class AppState extends ChangeNotifier {
       'userUid': authUid,
       'caseId': caseId,
       'caseType': caseType,
-
       'isCorrect': isCorrect,
       'userChoice': userChoice.name, // "real"/"fake"
       'difficulty': difficulty,
       'usedHint': usedHint,
-
-      // Time fields
-      'answeredAt': FieldValue.serverTimestamp(), // canonical
+      'answeredAt': FieldValue.serverTimestamp(),
       'hourLocal': h,
       'bucket': bucket,
-
-      // Optional, useful for later filters
       'tags': item.tags,
       'createdBy': item.createdBy, // null for ai cases
     });
   }
 
-
-  /// Local save is awaited; Firestore sync is NOT awaited (so UI stays smooth).
+  /// Local save is awaited; Firestore sync is NOT awaited.
   Future<void> _save() async {
     try {
       await LocalStorage.saveProgressJson(progress.toJson());
 
-      // ✅ IMPORTANT:
       // Leaderboard rules require docId == FirebaseAuth.uid.
-      // So only sync leaderboard if we have an authed Firebase user.
       final authUid = FirebaseAuth.instance.currentUser?.uid;
       if (authUid != null) {
         _leaderboardRepo.upsertFromProgress(progress, uid: authUid).catchError((_) {});
@@ -168,12 +165,10 @@ class AppState extends ChangeNotifier {
 
   Future<void> setAppModeTeacher() async {
     progress.appMode = 'teacher';
-    // teacherUid stays null until login succeeds
     notifyListeners();
     await _save();
   }
 
-  /// Call this when teacher login succeeds (FirebaseAuth)
   Future<void> setTeacherUid(String uid) async {
     progress.teacherUid = uid;
     progress.appMode = 'teacher';
@@ -199,7 +194,6 @@ class AppState extends ChangeNotifier {
     await _save();
   }
 
-  /// Used by OnboardingFlow (student)
   Future<void> completeOnboarding({
     required String displayName,
     required String avatarKey,
@@ -210,7 +204,6 @@ class AppState extends ChangeNotifier {
     progress.avatarKey = avatarKey;
     progress.hasOnboarded = true;
 
-    // Ensure student mode when completing onboarding
     progress.appMode = 'student';
     progress.teacherUid = null;
 
@@ -281,7 +274,6 @@ class AppState extends ChangeNotifier {
   // Gameplay + achievements
   // ----------------------------
 
-
   Future<List<CelebrationEvent>> recordCaseSolved({
     required String caseId,
     required AnswerChoice userChoice,
@@ -296,11 +288,9 @@ class AppState extends ChangeNotifier {
     final events = <CelebrationEvent>[];
     final oldLevel = progress.level;
 
-    // Prevent repeats
     final wasNew = progress.solvedCaseIds.add(caseId);
     if (wasNew) progress.casesSolvedTotal += 1;
 
-    // Store snapshot in bounded answer history
     progress.recentAnswers.add(
       AnswerRecord(
         caseId: caseId,
@@ -322,7 +312,6 @@ class AppState extends ChangeNotifier {
       progress.recentAnswers.removeRange(0, extra);
     }
 
-    // Update counters / XP
     if (isCorrect) {
       progress.correctAnswersTotal += 1;
 
@@ -343,19 +332,16 @@ class AppState extends ChangeNotifier {
       progress.sessionStreak = 0;
     }
 
-    // Achievement unlock checks
     final unlockedAchievementIds = _evaluateAndUnlockAchievements(t);
     for (final id in unlockedAchievementIds) {
       events.add(CelebrationEvent.achievementUnlocked(id));
     }
 
-    // Level-up check
     final newLevel = progress.level;
     if (newLevel > oldLevel) {
       events.add(CelebrationEvent.levelUp(oldLevel, newLevel));
     }
 
-    // Inject daily streak celebration (if any)
     if (_pendingDailyStreakEvent != null) {
       events.insert(0, _pendingDailyStreakEvent!);
       _pendingDailyStreakEvent = null;
@@ -364,7 +350,6 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     await _save();
 
-    // ✅ Fire-and-forget stats logging (never blocks UI)
     _recordAnswerEvent(
       caseId: caseId,
       isCorrect: isCorrect,
@@ -377,7 +362,6 @@ class AppState extends ChangeNotifier {
 
     return events;
   }
-
 
   int _valueForCriteria(AchievementCriteria c) {
     switch (c.type) {
@@ -441,6 +425,11 @@ class AppState extends ChangeNotifier {
 
     progress.appMode = null;
     progress.teacherUid = null;
+
+    // ✅ optional: keep language selections even after reset
+    // If you want reset to also reset language, uncomment:
+    // progress.studentLocale = null;
+    // progress.teacherLocale = null;
 
     _pendingDailyStreakEvent = null;
 

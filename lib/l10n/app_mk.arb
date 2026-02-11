@@ -1,0 +1,419 @@
+
+{
+  "@@locale": "mk",
+
+  "logout": "Одјави се",
+  "language": "Јазик",
+  "selectLanguage": "Избери јазик",
+  "english": "Англиски",
+  "macedonian": "Македонски",
+  "confirm": "Потврди",
+  "cancel": "Откажи",
+  "returnToRoleSelection": "Назад до избор на улога",
+  "profileTitle": "Профил",
+  "level": "Ниво",
+  "xp": "Искуство",
+
+  "changeUsername": "Промени корисничко име",
+  "changeUsernameSubtitle": "Како да те нарекуваме?",
+  "usernameLabel": "Корисничко име",
+  "usernameHint": "пр. detektiv123",
+  "save": "Зачувај",
+
+  "chooseAvatar": "Избери аватар",
+  "chooseAvatarSubtitle": "Одбери детективски стил",
+  "selected": "Избрано",
+
+  "settings": "Поставки",
+  "settingsSubtitle": "Јазик, звук, итн.",
+  "stats": "Статистика",
+  "statsSubtitle": "Вкупен напредок и рекорди",
+
+  "resetProgressTitle": "Ресетирај напредок",
+  "resetProgressSubtitle": "Почни одново на овој уред",
+  "resetProgressBody": "Ова ќе ги избрише твоите искуство, нивоа, достигнувања, серии и историја на случаи на овој уред.\n\nНе може да се врати назад.",
+  "reset": "Ресетирај",
+
+  "avatarStojche": "Стојче",
+  "avatarDetective": "Детектив",
+  "avatarOwl": "Був",
+  "avatarRobot": "Робот",
+  "avatarFox": "Лисица",
+  "avatarStar": "Ѕвезда",
+  "statsTitle": "Статистика",
+  "statsHeading": "Твоја статистика",
+
+  "statsPerformanceTitle": "Перформанси",
+  "statsCasesSolved": "Решени случаи",
+  "statsCorrectAnswers": "Точни одговори",
+  "statsAllTimeAccuracy": "Вкупна точност",
+
+  "statsProgressTitle": "Напредок",
+  "statsTotalXp": "Вкупно искуство",
+  "statsAchievementsEarned": "Освоени достигнувања",
+
+  "statsStreakRecordsTitle": "Рекорди за серии",
+  "statsBestDailyStreak": "Најдобра дневна серија",
+  "statsBestCorrectStreak": "Најдобра серија точни",
+
+  "pctZero": "0%",
+  "dayCount": "{count, plural, one{{count} ден} other{{count} дена}}",
+  "@dayCount": { "placeholders": { "count": { "type": "int" } } },
+
+  "createCaseTitle": "Креирај случај",
+  "createCaseIntro": "Испрати случај за наставниците да го прегледаат.",
+
+  "required": "Задолжително",
+  "continueLabel": "Продолжи",
+
+  "createCaseFieldTitle": "Наслов",
+  "createCaseFieldSnippet": "Извадок / краток текст",
+  "createCaseFieldSourceName": "Име на извор",
+  "createCaseFieldSourceUrl": "URL на извор",
+  "createCaseFieldExplanation": "Објаснување (зошто РЕАЛНО/ЛАЖНО)",
+  "createCaseFieldTags": "Тагови (разделени со запирка)",
+  "createCaseTagsHint": "clickbait, missing-source, fearbait",
+
+  "createCaseCorrectAnswer": "Точен одговор",
+  "realUpper": "РЕАЛНО",
+  "fakeUpper": "ЛАЖНО",
+
+  "difficulty": "Тежина",
+  "difficultyEasy": "{level} (Лесно)",
+  "@difficultyEasy": { "placeholders": { "level": { "type": "int" } } },
+  "difficultyMedium": "{level} (Средно)",
+  "@difficultyMedium": { "placeholders": { "level": { "type": "int" } } },
+  "difficultyHard": "{level} (Тешко)",
+  "@difficultyHard": { "placeholders": { "level": { "type": "int" } } },
+
+  "sendingEllipsis": "Се праќа…",
+  "createCaseSendButton": "Испрати случај",
+
+  "createCaseFillAllFields": "Пополнете ги сите полиња и изберете РЕАЛНО/ЛАЖНО.",
+  "createCaseSuccessTitle": "Браво, детективе!",
+  "createCaseSuccessBody": "Твојот случај е испратен до наставниците за преглед.\nКога ќе биде одобрен, другите ученици ќе можат да го решаваат.",
+  "createCasePermissionDenied": "Немаш дозвола. Провери дали правилата се објавени на ИСТИОТ Firebase проект.",
+  "createCaseCouldNotSend": "Не можев да го испратам случајот: {msg}",
+  "@createCaseCouldNotSend": { "placeholders": { "msg": { "type": "String" } } },
+
+  "casesAllSolved": "Ги реши сите достапни случаи.\nВрати се подоцна!",
+  "refresh": "Освежи",
+
+  "correctLabel": "Точно ✅",
+  "notQuiteLabel": "Не баш ❌",
+  "claimRewards": "Земи награди",
+  "nextCase": "Следен случај",
+
+  "hintClickbait": "Ова личи на кликбејт. Текстот е емотивен и те тера да реагираш.",
+  "hintMissingSource": "Нема јасен извор. „Експерти велат“ без имиња е сомнително.",
+  "hintFearbait": "Користи страв или итност за да те натера да реагираш брзо. Реалните вести обично се посмирени.",
+  "hintContextMissing": "Можно е да недостига контекст. Кратки клипови или слики можат да бидат измамни.",
+  "hintAbsurdClaim": "Звучи премногу добро за да е вистина. Необични тврдења бараат силни докази.",
+  "hintLeansRealReason": "Звучи конкретно и практично, што често значи дека е реална информација.",
+  "hintGenericSuspicious": "Нешто не штима: нејасни детали и нема лесен начин за проверка.",
+  "hintLeaningFake": "Се навалувам дека е ЛАЖНО.",
+  "hintLeaningReal": "Се навалувам дека е РЕАЛНО.",
+  "askStojche": "Прашај го Стојче",
+
+  "celebrationLevelUpTitle": "Ново ниво!",
+  "celebrationNowLevel": "Сега си Ниво {level} 🎉",
+  "@celebrationNowLevel": { "placeholders": { "level": { "type": "int" } } },
+
+  "celebrationDailyStreakTitle": "Дневна серија!",
+  "celebrationDailyStreakLine": "Серијата продолжува: {days} ден(а) 📅",
+  "@celebrationDailyStreakLine": { "placeholders": { "days": { "type": "int" } } },
+
+  "celebrationAchievementUnlockedTitle": "Постигнување отклучено!",
+  "celebrationUnlockedAchievement": "Го отклучи „{title}“",
+  "@celebrationUnlockedAchievement": { "placeholders": { "title": { "type": "String" } } },
+
+  "celebrationCongratsDetective": "Честитки, детективе!",
+  "continueBtn": "Продолжи",
+
+  "caseLibraryRecentCases": "Последни случаи",
+  "caseLibraryMistakesOnly": "Само грешки",
+  "caseLibraryEmpty": "Сѐ уште нема што да прегледаш.\nРешавај некој случај прво.",
+
+  "caseReviewYourAnswer": "Твој одговор",
+  "caseReviewCorrectAnswer": "Точен одговор",
+  "caseReviewExplanation": "Објаснување",
+
+  "learnTipOfTheDay": "Совет на денот",
+  "learnPatternsTitle": "Научи ги шаблоните",
+  "learnCaseLibrary": "Библиотека на случаи",
+  "learnCaseLibrarySubtitle": "Прегледај ги решените случаи и објаснувања",
+
+  "leaderboardTitle": "Ранг листа",
+  "leaderboardEmpty": "Сè уште нема резултати на ранг листата.",
+
+  "leaderboardError": "Грешка во ранг листата: {error}",
+  "@leaderboardError": { "placeholders": { "error": { "type": "String" } } },
+
+  "leaderboardMeLoadFailTitle": "Не можев да го вчитам твојот резултат",
+  "leaderboardTryLater": "Пробај повторно подоцна.",
+
+  "leaderboardNotUploadedTitle": "Твојот резултат сè уште не е зачуван.",
+  "leaderboardNotUploadedSubtitle": "Реши еден случај за да се синхронизира XP-то на ранг листата.",
+
+  "leaderboardRankUnavailableTitle": "Рангот моментално не е достапен",
+  "leaderboardLoadingRank": "Го вчитувам твојот ранг…",
+
+  "leaderboardXpLevel": "XP {xp} • Ниво {level}",
+  "@leaderboardXpLevel": {
+    "placeholders": {
+      "xp": { "type": "int" },
+      "level": { "type": "int" }
+    }
+  },
+
+  "achievementUnlockedOn": "Отклучено на",
+  "achievementXpReward": "XP награда",
+  "achievementXpValue": "{xp} XP",
+  "@achievementXpValue": { "placeholders": { "xp": { "type": "int" } } },
+
+  "rewardsLevel": "Ниво {level}",
+  "@rewardsLevel": { "placeholders": { "level": { "type": "int" } } },
+
+  "rewardsXp": "XP: {xp}",
+  "@rewardsXp": { "placeholders": { "xp": { "type": "int" } } },
+
+  "rewardsBadgesTitle": "Значки",
+  "rewardsNotUnlocked": "Сè уште не е отклучено 🔒",
+  "rewardsUnlockedDateMissing": "Недостига датум на отклучување (debug)",
+
+  "patternQuickChecklist": "Брза проверка",
+
+  "navCases": "Вести",
+  "navLearn": "Научи",
+  "navRewards": "Награди",
+  "navProfile": "Профил",
+  "navCreate": "Креирај",
+
+  "teacherGateVerifyErrorTitle": "Не може да се потврди улогата на професор.",
+  "teacherGateNotAuthorizedTitle": "Немате дозвола како професор.",
+  "teacherGateNotAuthorizedBody": "Оваа сметка не е означена како професор во Firestore.",
+  "signOut": "Одјави се",
+
+  "teacherModerationBubble": "Одобри ги добрите случаи за учениците да можат да ги играат.\nОдбиј ги оние со слаб квалитет.",
+  "teacherModerationApprove": "Одобри",
+  "teacherModerationDecline": "Одбиј",
+  "teacherModerationEmpty": "Моментално нема доделени случаи.\nВрати се подоцна.",
+
+  "teacherModerationErrNoPermission": "Немате дозвола. Можно е случајот да не е доделен за вас.",
+  "teacherModerationErrAlreadyReviewed": "Овој случај веќе е прегледан од друг.",
+  "teacherModerationErrNotFound": "Овој случај повеќе не постои.",
+  "teacherModerationErrGeneric": "Акцијата не успеа.",
+  "teacherModerationErrActionFailed": "Акцијата не успеа: {error}",
+  "@teacherModerationErrActionFailed": { "placeholders": { "error": { "type": "String" } } },
+
+  "teacherModerationStreamError": "Грешка при модерирање: {error}\n\nАко пишува „requires an index“, креирај индекс во Firestore конзолата.",
+  "@teacherModerationStreamError": { "placeholders": { "error": { "type": "String" } } },
+
+  "teacherLoginTitle": "Најава за професор",
+  "teacherLoginFailedTitle": "Неуспешна најава",
+
+  "email": "Е-пошта",
+  "password": "Лозинка",
+  "login": "Најави се",
+  "back": "Назад",
+  "ok": "Во ред",
+
+  "teacherLoginErrGeneric": "Професор со овие податоци не постои. Обиди се повторно.",
+  "teacherLoginErrDisabled": "Овој професорски профил е оневозможен. Контактирај администратор.",
+  "teacherLoginErrNetwork": "Мрежна грешка. Провери интернет и обиди се повторно.",
+  "teacherLoginErrTooMany": "Премногу обиди. Почекај малку и обиди се повторно.",
+  "teacherLoginErrEnterBoth": "Внеси и е-пошта и лозинка.",
+  "teacherLoginErrNotTeacher": "Овој профил не е регистриран како професор.",
+
+  "teacherNavModerate": "Модерација",
+  "teacherNavStats": "Статистика",
+  "teacherNavAiTools": "AI Алатки",
+  "teacherNavSettings": "Поставки",
+
+  "teacherToolsHeaderDefault": "Додади (повикај) еден AI случај во базата.\nСтудентите ќе го видат и ќе можат да го решат еднаш.",
+  "teacherToolsHeaderSuccess": "✅ Успешно додаде AI случај!\nСтудентите сега можат да го играат.",
+  "teacherToolsCategoryTitle": "Категорија",
+  "teacherToolsDifficultyTitle": "Тежина",
+
+  "teacherToolsCategoryTechnology": "Технологија",
+  "teacherToolsCategoryHealth": "Здравје",
+  "teacherToolsCategoryScience": "Наука",
+  "teacherToolsCategorySports": "Спорт",
+  "teacherToolsCategoryEntertainment": "Забава",
+
+  "teacherToolsSummonOne": "Додади 1 AI случај",
+  "teacherToolsSummoning": "Се додава…",
+  "teacherToolsWaitSeconds": "Почекај {seconds} сек",
+  "@teacherToolsWaitSeconds": { "placeholders": { "seconds": { "type": "int" } } },
+
+  "teacherToolsNoCaseCreated": "Овој пат не се создаде случај (можеби е дупликат). Пробај повторно.",
+  "teacherToolsError": "Грешка: {message}",
+  "@teacherToolsError": { "placeholders": { "message": { "type": "String" } } },
+
+  "teacherStatsError": "Грешка во статистика: {message}",
+  "@teacherStatsError": { "placeholders": { "message": { "type": "String" } } },
+
+  "teacherStatsEmpty": "Сè уште нема зачувани одговори.\nПрво решете неколку случаи.",
+  "teacherStatsHeaderBubble": "Ти ги донесов податоците што покажуваат\nво кој дел од денот студентите ги играат случаите.",
+
+  "teacherStatsTotalAnswers": "Вкупно зачувани одговори: {total}",
+  "@teacherStatsTotalAnswers": { "placeholders": { "total": { "type": "int" } } },
+
+  "teacherStatsAnswersCount": "{count} одговори",
+  "@teacherStatsAnswersCount": { "placeholders": { "count": { "type": "int" } } },
+
+  "teacherStatsNight": "Ноќ",
+  "teacherStatsMorning": "Утро",
+  "teacherStatsAfternoon": "Попладне",
+  "teacherStatsEvening": "Вечер",
+
+  "teacherStatsNightTime": "01–07",
+  "teacherStatsMorningTime": "07–13",
+  "teacherStatsAfternoonTime": "13–19",
+  "teacherStatsEveningTime": "19–01",
+
+  "teacherStatsTip": "Совет: Лентите го покажуваат процентот од последните {total} одговори.",
+  "@teacherStatsTip": { "placeholders": { "total": { "type": "int" } } },
+
+  "tip0": "Ако насловот те налути или шокира — застани. Силните емоции често се користат за ширење дезинформации.",
+  "tip1": "Провери го изворот: дали страницата има „За нас“, контакт информации и вистински автор?",
+  "tip2": "Побарај докази: веродостојните тврдења најчесто имаат податоци, документи или именувани експерти.",
+  "tip3": "Внимавај со скриншотови и кратки клипови — недостиг на контекст може целосно да го смени значењето.",
+  "tip4": "Ако објавата вели „сподели веднаш“ или „тие не сакаат да знаеш“, сметај го тоа како црвено знаме.",
+  "tip5": "Провери датуми: стара вест споделена денес може да доведе до погрешен заклучок.",
+  "tip6": "Спореди со друг доверлив извор. Ако е вистина, најчесто ќе ја пренесат повеќе медиуми.",
+  "tip7": "Внимавај на „чудотворни лекови“ и „инстант резултати“. Ова се чести измамнички шаблони.",
+
+  "caseLibraryTitle": "Библиотека на случаи",
+  "caseLibrarySubtitle": "Прегледај решени случаи и објаснувања",
+
+  "patternClickbaitTitle": "Кликбејт",
+  "patternClickbaitShort": "Претерано драматични наслови што те тераат да кликнеш.",
+  "patternClickbaitExpl": "Кликбејт користи емоционални зборови и претерување за да те натера да кликнеш. Често ја крие вистинската информација или ја извртува.",
+  "patternClickbaitC1": "Дали пишува „Нема да веруваш…“ или „Шокантно“?",
+  "patternClickbaitC2": "Дали недостигаат детали (кој, каде, кога)?",
+  "patternClickbaitC3": "Дали ветува инстант резултати?",
+  "patternClickbaitC4": "Дали те турка брзо да споделиш?",
+
+  "patternMissingSourceTitle": "Нема веродостоен извор",
+  "patternMissingSourceShort": "Тврдења без докази или доверливи референци.",
+  "patternMissingSourceExpl": "Доверлива објава обично покажува од каде е информацијата. „Една студија вели…“ не е доволно без детали.",
+  "patternMissingSourceC1": "Дали има вистински автор или организација?",
+  "patternMissingSourceC2": "Дали има линкови до официјални документи или податоци?",
+  "patternMissingSourceC3": "Дали е „некој кажал“ без имиња?",
+  "patternMissingSourceC4": "Можеш ли да го потврдиш и на друго место?",
+
+  "patternContextTitle": "Недостасува контекст",
+  "patternContextShort": "Вистинска информација искористена на погрешен/манипулативен начин.",
+  "patternContextExpl": "Понекогаш зборовите или сликата се вистински, но објавата го трга контекстот (време, место, цел цитат) за да го смени значењето.",
+  "patternContextC1": "Дали клипот е многу краток?",
+  "patternContextC2": "Дали може да е старо нешто повторно објавено?",
+  "patternContextC3": "Дали цитатот е нецелосен?",
+  "patternContextC4": "Дали објавата избегнува да даде позадински детали?",
+
+  "patternFearTitle": "Убедување преку страв",
+  "patternFearShort": "Те плаши за да реагираш брзо.",
+  "patternFearExpl": "Стравот ги тера луѓето да споделуваат без проверка. Измами често кажуваат дека телефонот, акаунтот или здравјето ти е во опасност за да те натераат да делуваш.",
+  "patternFearC1": "Дали користи итен тон („СЕГА!“, „ПРЕДУПРЕДУВАЊЕ!“)?",
+  "patternFearC2": "Дали се заканува со последици ако не реагираш?",
+  "patternFearC3": "Дали те турка да симнеш нешто или да кликнеш линк?",
+  "patternFearC4": "Дали избегнува докази?",
+
+  "patternAbsurdTitle": "Апсурдни / невозможни тврдења",
+  "patternAbsurdShort": "Тврдења што немаат логика во реалниот живот.",
+  "patternAbsurdExpl": "Ако нешто звучи магично или невозможно, најчесто и е. Овие објави се потпираат на изненадување, не на доказ.",
+  "patternAbsurdC1": "Дали е премногу добро за да е вистина?",
+  "patternAbsurdC2": "Дали ја крши основната логика/наука?",
+  "patternAbsurdC3": "Дали нема јасен извор?",
+  "patternAbsurdC4": "Ако беше вистина, дали повеќе доверливи медиуми ќе објавеа?",
+
+  "patternDomainTitle": "Сомнителни домени",
+  "patternDomainShort": "Сајтови што личат официјално, ама не се.",
+  "patternDomainExpl": "Лажни сајтови често имитираат вистински или користат чудни домени. Ако научиш да ги забележуваш ситните разлики, ќе се заштитиш.",
+  "patternDomainC1": "Дали доменот е чуден (цртички, грешни букви)?",
+  "patternDomainC2": "Дали имитира познато име на сајт?",
+  "patternDomainC3": "Дали има премногу реклами/поп-ап прозорци?",
+  "patternDomainC4": "Дали му недостига „About/Контакт“ страница?",
+
+  "ach_baby_detective_title": "Бебе Детектив",
+  "ach_baby_detective_desc": "Реши 3 случаи.",
+
+  "ach_on_the_case_title": "На Случајот",
+  "ach_on_the_case_desc": "Реши 10 случаи.",
+
+  "ach_sharp_eye_title": "Остро Око",
+  "ach_sharp_eye_desc": "Имај 5 точни одговори.",
+
+  "ach_partners_in_crime_title": "Партнери во Злосторство",
+  "ach_partners_in_crime_desc": "Испрати покана на 1 близок пријател да ти се придружи како Детектив за Лажни Вести.",
+
+  "ach_bullseye_title": "Во Центар",
+  "ach_bullseye_desc": "Реши 20 случаи по ред точно.",
+
+  "ach_cena_de_detectives_title": "Cena de Detectives",
+  "ach_cena_de_detectives_desc": "Реши 50 случаи на шпански.",
+
+  "ach_moonlight_dancer_title": "Танчер на Месечина",
+  "ach_moonlight_dancer_desc": "Реши 26 случаи помеѓу 23:00 и 01:00.",
+
+  "ach_stojche_the_great_title": "Стојче Велики",
+  "ach_stojche_the_great_desc": "Реши случај на 2 август или 8 септември.",
+
+  "ach_mad_scientist_title": "Луд Научник",
+  "ach_mad_scientist_desc": "Реши 20 случаи по ред точно без помош од Стојче.",
+
+  "ach_dream_team_title": "Тим од Соништата",
+  "ach_dream_team_desc": "Испрати покана на 5 блиски пријатели да ви се придружат како Детективи за Лажни Вести.",
+
+  "ach_truth_seeker_title": "Трагач по Вистината",
+  "ach_truth_seeker_desc": "Побарај помош од Стојче 50 пати.",
+
+  "ach_ace_of_hearts_title": "Ас од Срца",
+  "ach_ace_of_hearts_desc": "Одговори точно на 11 случаи по ред.",
+
+  "ach_daily_discipline_title": "Дневна Дисциплина",
+  "ach_daily_discipline_desc": "Одржувај дневна серија 7 дена.",
+
+  "ach_smile_generator_title": "Генератор на Насмевки",
+  "ach_smile_generator_desc": "Одговори точно на 10 случаи по ред сам, додека Стојче е кај стоматолог.",
+
+  "ach_winter_wonderland_title": "Зимска Бајка",
+  "ach_winter_wonderland_desc": "Играј 1000 случаи помеѓу 1 декември и 31 јануари.",
+
+
+  "onboardingWelcomeTitle": "Добредојде, детективе!",
+  "onboardingWelcomeBody": "Здраво! Јас сум Стојче, детектив за лажни вести, ама да си кажеме — обичен прилепчанец. Ќе ти помогнам да препознаваш лажни вести со траги и логика. Ајде да почнеме!",
+
+  "onboardingUsernameTitle": "Внеси корисничко име",
+  "onboardingUsernameBody": "Ова име ќе се прикажува на твојот профил и на ранг листата.",
+
+  "onboardingAvatarTitle": "Избери аватар",
+  "onboardingAvatarBody": "Ова можеш да го смениш подоцна во Профил.",
+
+  "avatarBolt": "Молња",
+  "avatarShield": "Штит",
+  "avatarLeaf": "Лист",
+
+
+  "roleGateTitle": "Избери улога",
+  "roleGateSubtitle": "Учениците решаваат случаи.\nПрофесорите ги прегледуваат случаите креирани од ученици.",
+
+  "roleStudentTitle": "Ученик",
+  "roleStudentSubtitle": "Играј и учи",
+
+  "roleTeacherTitle": "Професор",
+  "roleTeacherSubtitle": "Прегледувај случаи",
+
+  "roleGateTeacherForced": "Режимот за професор е избран.",
+  "roleGateHint": "Можеш подоцна да ја смениш улогата со ресетирање на напредокот (опционално).",
+
+  "roleSelectTitle": "Избери улога",
+  "roleSelectSubtitle": "Учениците учат да препознаваат лажни вести.\nПрофесорите ги модерираат и објавуваат ученичките случаи.",
+  "roleSelectContinueStudent": "Продолжи како ученик",
+  "roleSelectContinueTeacher": "Продолжи како професор"
+
+
+
+
+
+}

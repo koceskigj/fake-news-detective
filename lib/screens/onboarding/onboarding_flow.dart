@@ -1,4 +1,7 @@
+// lib/screens/onboarding/onboarding_flow.dart
 import 'package:flutter/material.dart';
+
+import '../../l10n/app_localizations.dart';
 import '../../state/app_state_scope.dart';
 import '../../app/home_shell.dart';
 
@@ -17,15 +20,16 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   String _selectedAvatarKey = 'monkey';
 
   static const _avatars = [
-    ('monkey', 'Stojche', Icons.emoji_nature),
-    ('detective', 'Detective', Icons.manage_search),
-    ('owl', 'Owl', Icons.visibility),
-    ('robot', 'Robot', Icons.smart_toy_outlined),
-    ('fox', 'Fox', Icons.pets_outlined),
-    ('star', 'Star', Icons.star_outline),
-    ('bolt', 'Bolt', Icons.bolt),
-    ('shield', 'Shield', Icons.shield_outlined),
-    ('leaf', 'Leaf', Icons.eco_outlined),
+    ('monkey', 'avatarStojche', Icons.emoji_nature),
+    ('detective', 'avatarDetective', Icons.manage_search),
+    ('owl', 'avatarOwl', Icons.visibility),
+    ('robot', 'avatarRobot', Icons.smart_toy_outlined),
+    ('fox', 'avatarFox', Icons.pets_outlined),
+    ('star', 'avatarStar', Icons.star_outline),
+    // Optional extra avatars (add keys in arb if you keep them)
+    ('bolt', 'avatarBolt', Icons.bolt),
+    ('shield', 'avatarShield', Icons.shield_outlined),
+    ('leaf', 'avatarLeaf', Icons.eco_outlined),
   ];
 
   @override
@@ -53,7 +57,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
     if (!mounted) return;
 
-    // Go to Profile tab
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const HomeShell(initialIndex: 3)),
     );
@@ -62,6 +65,36 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    // Map avatar localization keys to actual localized strings
+    String avatarLabel(String l10nKey) {
+      switch (l10nKey) {
+        case 'avatarStojche':
+          return l10n.avatarStojche;
+        case 'avatarDetective':
+          return l10n.avatarDetective;
+        case 'avatarOwl':
+          return l10n.avatarOwl;
+        case 'avatarRobot':
+          return l10n.avatarRobot;
+        case 'avatarFox':
+          return l10n.avatarFox;
+        case 'avatarStar':
+          return l10n.avatarStar;
+
+      // Optional extras (only if you add them to arb)
+        case 'avatarBolt':
+          return l10n.avatarBolt;
+        case 'avatarShield':
+          return l10n.avatarShield;
+        case 'avatarLeaf':
+          return l10n.avatarLeaf;
+
+        default:
+          return l10nKey; // shows missing keys
+      }
+    }
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -85,14 +118,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Welcome, detective!',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                  Text(
+                    l10n.onboardingWelcomeTitle,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Hi there! I’m Stojche, a fake news detective, but truth be told, just your average Prilep resident. I’ll help you spot fake news using clues and logic. Let the fun begin!',
+                    l10n.onboardingWelcomeBody,
                     style: TextStyle(
                       fontSize: 16,
                       height: 1.3,
@@ -104,7 +137,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   const SizedBox(height: 22),
                   FilledButton(
                     onPressed: _next,
-                    child: const Text('Continue'),
+                    child: Text(l10n.continueBtn),
                   ),
                 ],
               ),
@@ -116,14 +149,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    'Enter your username',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                  Text(
+                    l10n.onboardingUsernameTitle,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'This name will show on your profile and leaderboard.',
+                    l10n.onboardingUsernameBody,
                     style: TextStyle(
                       fontSize: 16,
                       height: 1.3,
@@ -137,16 +170,16 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     controller: _nameController,
                     maxLength: 20,
                     textInputAction: TextInputAction.done,
-                    decoration: const InputDecoration(
-                      labelText: 'Username',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.usernameLabel,
+                      border: const OutlineInputBorder(),
                     ),
                     onSubmitted: (_) => _next(),
                   ),
                   const SizedBox(height: 10),
                   FilledButton(
                     onPressed: _next,
-                    child: const Text('Continue'),
+                    child: Text(l10n.continueBtn),
                   ),
                 ],
               ),
@@ -158,14 +191,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               child: Column(
                 children: [
                   const SizedBox(height: 12),
-                  const Text(
-                    'Choose your avatar',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                  Text(
+                    l10n.onboardingAvatarTitle,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'You can change this later in Profile.',
+                    l10n.onboardingAvatarBody,
                     style: TextStyle(
                       fontSize: 16,
                       height: 1.3,
@@ -184,8 +217,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                         mainAxisSpacing: 10,
                       ),
                       itemBuilder: (context, i) {
-                        final (key, label, icon) = _avatars[i];
+                        final (key, labelKey, icon) = _avatars[i];
                         final selected = key == _selectedAvatarKey;
+                        final label = avatarLabel(labelKey);
 
                         return InkWell(
                           borderRadius: BorderRadius.circular(16),
@@ -221,7 +255,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: _finish,
-                      child: const Text('Continue'),
+                      child: Text(l10n.continueBtn),
                     ),
                   ),
                 ],

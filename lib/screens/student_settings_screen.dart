@@ -1,28 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../../l10n/app_localizations.dart';
-import '../../state/app_state_scope.dart';
-import '../role_gate/role_gate_screen.dart';
+import '../l10n/app_localizations.dart';
+import '../state/app_state_scope.dart';
+import '../widgets/branded_app_bar.dart';
 
-class TeacherSettingsScreen extends StatelessWidget {
-  const TeacherSettingsScreen({super.key});
-
-  Future<void> _logout(BuildContext context) async {
-    final appState = AppStateScope.of(context);
-    await appState.logoutTeacher();
-
-    if (!context.mounted) return;
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const RoleGateScreen()),
-          (route) => false,
-    );
-  }
+class StudentSettingsScreen extends StatelessWidget {
+  const StudentSettingsScreen({super.key});
 
   Future<void> _showLanguageSheet(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final appState = AppStateScope.of(context);
-    final current = appState.teacherLocaleCode; // "en" | "mk"
+    final current = appState.studentLocaleCode; // "en" | "mk"
 
     final selected = await showModalBottomSheet<String>(
       context: context,
@@ -86,7 +74,7 @@ class TeacherSettingsScreen extends StatelessWidget {
     );
 
     if (selected == null) return;
-    await appState.setTeacherLocale(selected);
+    await appState.setStudentLocale(selected);
   }
 
   @override
@@ -94,6 +82,7 @@ class TeacherSettingsScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
+      appBar: BrandedAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -105,14 +94,6 @@ class TeacherSettingsScreen extends StatelessWidget {
                 subtitle: Text('${l10n.english} / ${l10n.macedonian}'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _showLanguageSheet(context),
-              ),
-            ),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.logout),
-                title: Text(l10n.logout),
-                subtitle: Text(l10n.returnToRoleSelection),
-                onTap: () => _logout(context),
               ),
             ),
           ],

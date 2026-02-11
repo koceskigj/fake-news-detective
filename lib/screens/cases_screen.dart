@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/answer_record.dart';
 import '../models/case_item.dart';
 import '../models/celebration_event.dart';
@@ -56,7 +57,8 @@ class _CasesScreenState extends State<CasesScreen> {
     final current = auth.currentUser;
     if (current != null) return current;
 
-    final cred = await auth.signInAnonymously().timeout(const Duration(seconds: 10));
+    final cred =
+    await auth.signInAnonymously().timeout(const Duration(seconds: 10));
     final u = cred.user;
     if (u == null) throw Exception('Anonymous sign-in failed.');
     return u;
@@ -100,27 +102,27 @@ class _CasesScreenState extends State<CasesScreen> {
   }
 
   String _generateHint(CaseItem item) {
+    final l10n = AppLocalizations.of(context)!;
     final tags = item.tags.map((t) => t.toLowerCase()).toList();
 
     String reason;
     if (tags.contains('clickbait') || tags.contains('sharebait')) {
-      reason =
-      'This feels like clickbait. The wording is emotional and tries to force a reaction.';
+      reason = l10n.hintClickbait;
     } else if (tags.contains('missing-source') || tags.contains('vague-evidence')) {
-      reason = 'I don’t see a clear source. “Experts say” without names is suspicious.';
+      reason = l10n.hintMissingSource;
     } else if (tags.contains('fearbait') || tags.contains('urgent-language')) {
-      reason = 'It uses fear or urgency to push you to act fast. Real info is usually calmer.';
+      reason = l10n.hintFearbait;
     } else if (tags.contains('context-missing') || tags.contains('cropped-clip')) {
-      reason = 'This might be missing context. Short clips or screenshots can mislead.';
+      reason = l10n.hintContextMissing;
     } else if (tags.contains('absurd-claim') || tags.contains('too-good-to-be-true')) {
-      reason = 'It sounds too good to be true. Extraordinary claims need strong evidence.';
+      reason = l10n.hintAbsurdClaim;
     } else if (!item.isFake) {
-      reason = 'This sounds specific and practical, which often points to real information.';
+      reason = l10n.hintLeansRealReason;
     } else {
-      reason = 'Something feels off: vague details and no easy way to verify.';
+      reason = l10n.hintGenericSuspicious;
     }
 
-    final leaning = item.isFake ? 'I’m leaning towards FAKE.' : 'I’m leaning towards REAL.';
+    final leaning = item.isFake ? l10n.hintLeaningFake : l10n.hintLeaningReal;
     return '$reason\n\n$leaning';
   }
 
@@ -192,6 +194,7 @@ class _CasesScreenState extends State<CasesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isFirstLoadSpinner = !_loadedOnce || (_loadingCase && _current == null);
 
     return Scaffold(
@@ -215,15 +218,15 @@ class _CasesScreenState extends State<CasesScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  "You’ve solved all available cases.\nCome back later!",
+                Text(
+                  l10n.casesAllSolved,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontWeight: FontWeight.w800),
+                  style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 14),
                 FilledButton(
                   onPressed: _loadingCase ? null : _ensureCurrentCase,
-                  child: const Text('Refresh'),
+                  child: Text(l10n.refresh),
                 ),
               ],
             ),
@@ -237,25 +240,29 @@ class _CasesScreenState extends State<CasesScreen> {
                   children: [
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: _answerSubmitting ? null : () => _answer(UserChoice.real),
+                        onPressed: _answerSubmitting
+                            ? null
+                            : () => _answer(UserChoice.real),
                         style: FilledButton.styleFrom(
                           backgroundColor: _correctBg,
                           foregroundColor: _correctFg,
                         ),
                         icon: const Icon(Icons.verified_outlined),
-                        label: const Text('REAL'),
+                        label: Text(l10n.realUpper),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: _answerSubmitting ? null : () => _answer(UserChoice.fake),
+                        onPressed: _answerSubmitting
+                            ? null
+                            : () => _answer(UserChoice.fake),
                         style: FilledButton.styleFrom(
                           backgroundColor: _wrongBg,
                           foregroundColor: _wrongFg,
                         ),
                         icon: const Icon(Icons.report_gmailerrorred_outlined),
-                        label: const Text('FAKE'),
+                        label: Text(l10n.fakeUpper),
                       ),
                     ),
                   ],
@@ -279,7 +286,9 @@ class _CasesScreenState extends State<CasesScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        (_isCorrect ?? false) ? 'Correct ✅' : 'Not quite ❌',
+                        (_isCorrect ?? false)
+                            ? l10n.correctLabel
+                            : l10n.notQuiteLabel,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
@@ -297,7 +306,9 @@ class _CasesScreenState extends State<CasesScreen> {
                       FilledButton(
                         onPressed: _next,
                         child: Text(
-                          _pendingCelebrations.isNotEmpty ? 'Claim rewards' : 'Next case',
+                          _pendingCelebrations.isNotEmpty
+                              ? l10n.claimRewards
+                              : l10n.nextCase,
                         ),
                       ),
                     ],

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'speech_bubble.dart';
 
 enum StojcheMood { idle, talking, celebrate, wise }
@@ -34,11 +36,12 @@ class StojcheHintArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // --- Stojche (bigger, recognizable) ---
+        // --- Stojche image ---
         SizedBox(
           width: 175,
           height: 200,
@@ -58,9 +61,10 @@ class StojcheHintArea extends StatelessWidget {
             child: FilledButton.tonalIcon(
               onPressed: hintUsed ? null : onAsk,
               icon: const Icon(Icons.question_answer_outlined),
-              label: const Text('Ask Stojche'),
+              label: Text(l10n.askStojche),
               style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),

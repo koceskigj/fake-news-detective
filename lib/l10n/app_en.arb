@@ -1,0 +1,413 @@
+
+{
+  "@@locale": "en",
+
+  "logout": "Log out",
+  "language": "Language",
+  "selectLanguage": "Choose language",
+  "english": "English",
+  "macedonian": "Macedonian",
+  "confirm": "Confirm",
+  "cancel": "Cancel",
+  "returnToRoleSelection": "Return to role selection",
+  "profileTitle": "Profile",
+  "level": "Level",
+  "xp": "XP",
+
+  "changeUsername": "Change username",
+  "changeUsernameSubtitle": "What should we call you?",
+  "usernameLabel": "Username",
+  "usernameHint": "e.g., detective123",
+  "save": "Save",
+
+  "chooseAvatar": "Choose avatar",
+  "chooseAvatarSubtitle": "Pick your detective style",
+  "selected": "Selected",
+
+  "settings": "Settings",
+  "settingsSubtitle": "Language, sound, etc.",
+  "stats": "Stats",
+  "statsSubtitle": "All-time progress and records",
+
+  "resetProgressTitle": "Reset progress",
+  "resetProgressSubtitle": "Start over on this device",
+  "resetProgressBody": "This will erase your XP, levels, achievements, streaks, and case history on this device.\n\nYou can’t undo this.",
+  "reset": "Reset",
+
+  "avatarStojche": "Stojche",
+  "avatarDetective": "Detective",
+  "avatarOwl": "Owl",
+  "avatarRobot": "Robot",
+  "avatarFox": "Fox",
+  "avatarStar": "Star",
+  "statsTitle": "Stats",
+  "statsHeading": "Your Stats",
+
+  "statsPerformanceTitle": "Performance",
+  "statsCasesSolved": "Cases solved",
+  "statsCorrectAnswers": "Correct answers",
+  "statsAllTimeAccuracy": "All-time accuracy",
+
+  "statsProgressTitle": "Progress",
+  "statsTotalXp": "Total XP",
+  "statsAchievementsEarned": "Achievements earned",
+
+  "statsStreakRecordsTitle": "Streak Records",
+  "statsBestDailyStreak": "Best daily streak",
+  "statsBestCorrectStreak": "Best correct streak",
+
+  "pctZero": "0%",
+  "dayCount": "{count, plural, one{{count} day} other{{count} days}}",
+  "@dayCount": { "placeholders": { "count": { "type": "int" } } },
+
+  "createCaseTitle": "Create case",
+  "createCaseIntro": "Send a news case for teachers to review.",
+
+  "required": "Required",
+  "continueLabel": "Continue",
+
+  "createCaseFieldTitle": "Title",
+  "createCaseFieldSnippet": "Snippet / short text",
+  "createCaseFieldSourceName": "Source name",
+  "createCaseFieldSourceUrl": "Source URL",
+  "createCaseFieldExplanation": "Explanation (why REAL/FAKE)",
+  "createCaseFieldTags": "Tags (comma-separated)",
+  "createCaseTagsHint": "clickbait, missing-source, fearbait",
+
+  "createCaseCorrectAnswer": "Correct answer",
+  "realUpper": "REAL",
+  "fakeUpper": "FAKE",
+
+  "difficulty": "Difficulty",
+  "difficultyEasy": "{level} (Easy)",
+  "@difficultyEasy": { "placeholders": { "level": { "type": "int" } } },
+  "difficultyMedium": "{level} (Medium)",
+  "@difficultyMedium": { "placeholders": { "level": { "type": "int" } } },
+  "difficultyHard": "{level} (Hard)",
+  "@difficultyHard": { "placeholders": { "level": { "type": "int" } } },
+
+  "sendingEllipsis": "Sending…",
+  "createCaseSendButton": "Send case",
+
+  "createCaseFillAllFields": "Please fill all fields and choose REAL/FAKE.",
+  "createCaseSuccessTitle": "Nice work, detective!",
+  "createCaseSuccessBody": "Your case was sent to the teachers for review.\nOnce approved, other students will be able to solve it.",
+  "createCasePermissionDenied": "Permission denied. Check you published rules on the SAME Firebase project.",
+  "createCaseCouldNotSend": "Could not send case: {msg}",
+  "@createCaseCouldNotSend": { "placeholders": { "msg": { "type": "String" } } },
+
+  "casesAllSolved": "You’ve solved all available cases.\nCome back later!",
+  "refresh": "Refresh",
+
+  "correctLabel": "Correct ✅",
+  "notQuiteLabel": "Not quite ❌",
+  "claimRewards": "Claim rewards",
+  "nextCase": "Next case",
+
+  "hintClickbait": "This feels like clickbait. The wording is emotional and tries to force a reaction.",
+  "hintMissingSource": "I don’t see a clear source. “Experts say” without names is suspicious.",
+  "hintFearbait": "It uses fear or urgency to push you to act fast. Real info is usually calmer.",
+  "hintContextMissing": "This might be missing context. Short clips or screenshots can mislead.",
+  "hintAbsurdClaim": "It sounds too good to be true. Extraordinary claims need strong evidence.",
+  "hintLeansRealReason": "This sounds specific and practical, which often points to real information.",
+  "hintGenericSuspicious": "Something feels off: vague details and no easy way to verify.",
+  "hintLeaningFake": "I’m leaning towards FAKE.",
+  "hintLeaningReal": "I’m leaning towards REAL.",
+  "askStojche": "Ask Stojche",
+
+  "celebrationLevelUpTitle": "Level Up!",
+  "celebrationNowLevel": "You are now Level {level} 🎉",
+  "@celebrationNowLevel": { "placeholders": { "level": { "type": "int" } } },
+
+  "celebrationDailyStreakTitle": "Daily Streak!",
+  "celebrationDailyStreakLine": "Streak continued: {days} day(s) 📅",
+  "@celebrationDailyStreakLine": { "placeholders": { "days": { "type": "int" } } },
+
+  "celebrationAchievementUnlockedTitle": "Achievement Unlocked!",
+  "celebrationUnlockedAchievement": "You unlocked \"{title}\"",
+  "@celebrationUnlockedAchievement": { "placeholders": { "title": { "type": "String" } } },
+
+  "celebrationCongratsDetective": "Congratulations detective!",
+  "continueBtn": "Continue",
+
+  "caseLibraryRecentCases": "Recent cases",
+  "caseLibraryMistakesOnly": "Mistakes only",
+  "caseLibraryEmpty": "Nothing to review yet.\nPlay some cases first.",
+
+  "caseReviewYourAnswer": "Your answer",
+  "caseReviewCorrectAnswer": "Correct answer",
+  "caseReviewExplanation": "Explanation",
+
+  "learnTipOfTheDay": "Tip of the day",
+  "learnPatternsTitle": "Learn the patterns",
+  "learnCaseLibrary": "Case Library",
+  "learnCaseLibrarySubtitle": "Review solved cases and explanations",
+
+  "leaderboardTitle": "Leaderboard",
+  "leaderboardEmpty": "No leaderboard entries yet.",
+
+  "leaderboardError": "Leaderboard error: {error}",
+  "@leaderboardError": { "placeholders": { "error": { "type": "String" } } },
+
+  "leaderboardMeLoadFailTitle": "Could not load your entry",
+  "leaderboardTryLater": "Try again later.",
+
+  "leaderboardNotUploadedTitle": "Your score is not uploaded yet.",
+  "leaderboardNotUploadedSubtitle": "Play a case to sync your XP to the leaderboard.",
+
+  "leaderboardRankUnavailableTitle": "Rank unavailable right now",
+  "leaderboardLoadingRank": "Loading your rank…",
+
+  "leaderboardXpLevel": "XP {xp} • Level {level}",
+  "@leaderboardXpLevel": {
+    "placeholders": {
+      "xp": { "type": "int" },
+      "level": { "type": "int" }
+    }
+  },
+
+  "achievementUnlockedOn": "Unlocked on",
+  "achievementXpReward": "XP reward",
+  "achievementXpValue": "{xp} XP",
+  "@achievementXpValue": { "placeholders": { "xp": { "type": "int" } } },
+
+  "rewardsLevel": "Level {level}",
+  "@rewardsLevel": { "placeholders": { "level": { "type": "int" } } },
+  "rewardsXp": "XP: {xp}",
+  "@rewardsXp": { "placeholders": { "xp": { "type": "int" } } },
+
+  "rewardsBadgesTitle": "Badges",
+  "rewardsNotUnlocked": "Not unlocked yet 🔒",
+  "rewardsUnlockedDateMissing": "Unlocked date missing (debug)",
+
+  "patternQuickChecklist": "Quick checklist",
+
+  "navCases": "Cases",
+  "navLearn": "Learn",
+  "navRewards": "Rewards",
+  "navProfile": "Profile",
+  "navCreate": "Create",
+
+  "teacherGateVerifyErrorTitle": "Could not verify teacher role.",
+  "teacherGateNotAuthorizedTitle": "Not authorized as teacher.",
+  "teacherGateNotAuthorizedBody": "This account is not marked as a teacher in Firestore.",
+  "signOut": "Sign out",
+
+  "teacherModerationBubble": "Approve good cases so students can play them.\nDecline low quality ones.",
+  "teacherModerationApprove": "Approve",
+  "teacherModerationDecline": "Decline",
+  "teacherModerationEmpty": "No cases assigned right now.\nCome back later.",
+
+  "teacherModerationErrNoPermission": "No permission. This case may not be assigned to you.",
+  "teacherModerationErrAlreadyReviewed": "This case was already reviewed by someone else.",
+  "teacherModerationErrNotFound": "This case no longer exists.",
+  "teacherModerationErrGeneric": "Action failed.",
+  "teacherModerationErrActionFailed": "Action failed: {error}",
+  "@teacherModerationErrActionFailed": { "placeholders": { "error": { "type": "String" } } },
+
+  "teacherModerationStreamError": "Moderation error: {error}\n\nIf it says “requires an index”, create the index in Firestore console.",
+  "@teacherModerationStreamError": { "placeholders": { "error": { "type": "String" } } },
+
+  "teacherLoginTitle": "Teacher login",
+  "teacherLoginFailedTitle": "Login failed",
+  "email": "Email",
+  "password": "Password",
+  "login": "Login",
+  "back": "Back",
+  "ok": "OK",
+
+  "teacherLoginErrGeneric": "A teacher with these credentials does not exist. Try again.",
+  "teacherLoginErrDisabled": "This teacher account is disabled. Please contact the administrator.",
+  "teacherLoginErrNetwork": "Network error. Please check your internet connection and try again.",
+  "teacherLoginErrTooMany": "Too many attempts. Please wait a bit and try again.",
+  "teacherLoginErrEnterBoth": "Please enter both email and password.",
+  "teacherLoginErrNotTeacher": "This account is not registered as a teacher.",
+
+  "teacherNavModerate": "Moderate",
+  "teacherNavStats": "Stats",
+  "teacherNavAiTools": "AI Tools",
+  "teacherNavSettings": "Settings",
+
+  "teacherToolsHeaderDefault": "Summon a single AI case into the database.\nStudents will see it and can solve it once.",
+  "teacherToolsHeaderSuccess": "✅ You successfully summoned an AI case!\nStudents can now play it.",
+  "teacherToolsCategoryTitle": "Category",
+  "teacherToolsDifficultyTitle": "Difficulty",
+
+  "teacherToolsCategoryTechnology": "Technology",
+  "teacherToolsCategoryHealth": "Health",
+  "teacherToolsCategoryScience": "Science",
+  "teacherToolsCategorySports": "Sports",
+  "teacherToolsCategoryEntertainment": "Entertainment",
+
+  "teacherToolsSummonOne": "Summon 1 AI case",
+  "teacherToolsSummoning": "Summoning…",
+  "teacherToolsWaitSeconds": "Wait {seconds} s",
+  "@teacherToolsWaitSeconds": { "placeholders": { "seconds": { "type": "int" } } },
+
+  "teacherToolsNoCaseCreated": "No case created this time (maybe duplicate filtered). Try again.",
+  "teacherToolsError": "Error: {message}",
+  "@teacherToolsError": { "placeholders": { "message": { "type": "String" } } },
+
+  "teacherStatsError": "Stats error: {message}",
+  "@teacherStatsError": { "placeholders": { "message": { "type": "String" } } },
+
+  "teacherStatsEmpty": "No answers logged yet.\nPlay some cases first.",
+  "teacherStatsHeaderBubble": "I brought you the data that shows\nin which part of the day the students play the cases.",
+
+  "teacherStatsTotalAnswers": "Total answers logged: {total}",
+  "@teacherStatsTotalAnswers": { "placeholders": { "total": { "type": "int" } } },
+
+  "teacherStatsAnswersCount": "{count} answers",
+  "@teacherStatsAnswersCount": { "placeholders": { "count": { "type": "int" } } },
+
+  "teacherStatsNight": "Night",
+  "teacherStatsMorning": "Morning",
+  "teacherStatsAfternoon": "Afternoon",
+  "teacherStatsEvening": "Evening",
+
+  "teacherStatsNightTime": "1AM–7AM",
+  "teacherStatsMorningTime": "7AM–1PM",
+  "teacherStatsAfternoonTime": "1PM–7PM",
+  "teacherStatsEveningTime": "7PM–1AM",
+
+  "teacherStatsTip": "Tip: The bars show the percentage split of the latest {total} answers.",
+  "@teacherStatsTip": { "placeholders": { "total": { "type": "int" } } },
+
+  "tip0": "If a headline makes you angry or shocked, pause. Strong emotions are often used to spread misinformation.",
+  "tip1": "Check the source: does the site have an About page, contact info, and a real author?",
+  "tip2": "Look for evidence: credible claims usually include data, documents, or named experts.",
+  "tip3": "Be careful with screenshots and short clips—missing context can completely change the meaning.",
+  "tip4": "If a post says “share now” or “they don’t want you to know”, treat it as a red flag.",
+  "tip5": "Check dates: old news reposted today can mislead people.",
+  "tip6": "Compare with another trusted source. If it’s real, multiple outlets usually report it.",
+  "tip7": "Watch for “miracle cures” and “instant results”. These are common scam patterns.",
+
+  "caseLibraryTitle": "Case Library",
+  "caseLibrarySubtitle": "Review solved cases and explanations",
+
+  "patternClickbaitTitle": "Clickbait",
+  "patternClickbaitShort": "Overdramatic headlines that try to force clicks.",
+  "patternClickbaitExpl": "Clickbait uses emotional words and exaggeration to make you click. It often hides the real information or twists it.",
+  "patternClickbaitC1": "Does it say “You won’t believe…” or “Shocking”?",
+  "patternClickbaitC2": "Is it missing details (who, where, when)?",
+  "patternClickbaitC3": "Does it promise instant results?",
+  "patternClickbaitC4": "Does it push you to share quickly?",
+
+  "patternMissingSourceTitle": "No credible source",
+  "patternMissingSourceShort": "Claims without evidence or trustworthy references.",
+  "patternMissingSourceExpl": "A trustworthy post usually shows where the info came from. “A study says…” is not enough without details.",
+  "patternMissingSourceC1": "Is there a real author or organization?",
+  "patternMissingSourceC2": "Are there links to official documents or data?",
+  "patternMissingSourceC3": "Is it “someone said” with no names?",
+  "patternMissingSourceC4": "Can you confirm it elsewhere?",
+
+  "patternContextTitle": "Missing context",
+  "patternContextShort": "True info used in a misleading way.",
+  "patternContextExpl": "Sometimes the words or image are real, but the post removes context (time, place, full quote) to change the meaning.",
+  "patternContextC1": "Is the clip very short?",
+  "patternContextC2": "Could this be old content reposted?",
+  "patternContextC3": "Is the quote incomplete?",
+  "patternContextC4": "Does the post avoid giving background details?",
+
+  "patternFearTitle": "Fear-based persuasion",
+  "patternFearShort": "Scares you so you react fast.",
+  "patternFearExpl": "Fear makes people share without checking. Scams often say your phone, account, or health is in danger to push you into action.",
+  "patternFearC1": "Does it use urgent language (“NOW!”, “WARNING!”)?",
+  "patternFearC2": "Does it threaten consequences if you don’t act?",
+  "patternFearC3": "Does it push a download or link?",
+  "patternFearC4": "Does it avoid evidence?",
+
+  "patternAbsurdTitle": "Absurd / impossible claims",
+  "patternAbsurdShort": "Claims that don’t make sense in real life.",
+  "patternAbsurdExpl": "If something sounds magical or impossible, it usually is. These posts rely on surprise, not proof.",
+  "patternAbsurdC1": "Is it too good to be true?",
+  "patternAbsurdC2": "Does it break basic logic/science?",
+  "patternAbsurdC3": "Is there no clear source?",
+  "patternAbsurdC4": "Would multiple trusted outlets report this if it were true?",
+
+  "patternDomainTitle": "Suspicious domains",
+  "patternDomainShort": "Websites that look official but aren’t.",
+  "patternDomainExpl": "Fake sites often imitate real ones or use strange domains. Learning to notice small differences can protect you.",
+  "patternDomainC1": "Is the domain weird (extra dashes, misspellings)?",
+  "patternDomainC2": "Does it mimic a famous site name?",
+  "patternDomainC3": "Is it full of ads/popups?",
+  "patternDomainC4": "Is the site missing contact/about info?",
+
+  "ach_baby_detective_title": "Baby Detective",
+  "ach_baby_detective_desc": "Solve 3 cases.",
+
+  "ach_on_the_case_title": "On the Case",
+  "ach_on_the_case_desc": "Solve 10 cases.",
+
+  "ach_sharp_eye_title": "Sharp Eye",
+  "ach_sharp_eye_desc": "Get 5 correct answers.",
+
+  "ach_partners_in_crime_title": "Partners in Crime",
+  "ach_partners_in_crime_desc": "Send the invitation link to 1 dear friend to join you as a Fake News Detective.",
+
+  "ach_bullseye_title": "Bullseye",
+  "ach_bullseye_desc": "Solve 20 cases in a row correctly.",
+
+  "ach_cena_de_detectives_title": "Cena de Detectives",
+  "ach_cena_de_detectives_desc": "Solve 50 cases in Spanish.",
+
+  "ach_moonlight_dancer_title": "Moonlight Dancer",
+  "ach_moonlight_dancer_desc": "Solve 26 cases between 11 PM and 01 AM.",
+
+  "ach_stojche_the_great_title": "Stojche The Great",
+  "ach_stojche_the_great_desc": "Solve a case on 2nd of August or 8th of September.",
+
+  "ach_mad_scientist_title": "Mad Scientist",
+  "ach_mad_scientist_desc": "Solve 20 cases in a row correctly without Stojche's help.",
+
+  "ach_dream_team_title": "Dream Team",
+  "ach_dream_team_desc": "Send the invitation link to 5 dear friends to join you as a Fake News Detectives.",
+
+  "ach_truth_seeker_title": "Truth Seeker",
+  "ach_truth_seeker_desc": "Ask for Stojche's assistance 50 times.",
+
+  "ach_ace_of_hearts_title": "Ace Of Hearts",
+  "ach_ace_of_hearts_desc": "Answer 11 cases in a row correctly.",
+
+  "ach_daily_discipline_title": "Daily Discipline",
+  "ach_daily_discipline_desc": "Maintain a 7-day daily streak.",
+
+  "ach_smile_generator_title": "Smile Generator",
+  "ach_smile_generator_desc": "Answer 10 cases in a row correctly alone, while Stojche is at the dentist.",
+
+  "ach_winter_wonderland_title": "Winter Wonderland",
+  "ach_winter_wonderland_desc": "Play 1000 cases between December 1st and January 31st.",
+
+  "onboardingWelcomeTitle": "Welcome, detective!",
+  "onboardingWelcomeBody": "Hi there! I’m Stojche, a fake news detective, but truth be told, just your average Prilep resident. I’ll help you spot fake news using clues and logic. Let the fun begin!",
+
+  "onboardingUsernameTitle": "Enter your username",
+  "onboardingUsernameBody": "This name will show on your profile and leaderboard.",
+
+  "onboardingAvatarTitle": "Choose your avatar",
+  "onboardingAvatarBody": "You can change this later in Profile.",
+
+  "avatarBolt": "Bolt",
+  "avatarShield": "Shield",
+  "avatarLeaf": "Leaf",
+
+
+  "roleGateTitle": "Choose your role",
+  "roleGateSubtitle": "Students play cases.\nTeachers review student-made cases.",
+
+  "roleStudentTitle": "Student",
+  "roleStudentSubtitle": "Play & learn",
+
+  "roleTeacherTitle": "Teacher",
+  "roleTeacherSubtitle": "Review cases",
+
+  "roleGateTeacherForced": "Teacher mode selected.",
+  "roleGateHint": "You can switch role later by resetting progress (optional).",
+
+  "roleSelectTitle": "Choose your role",
+  "roleSelectSubtitle": "Students learn to spot fake news.\nTeachers moderate and publish student cases.",
+  "roleSelectContinueStudent": "Continue as Student",
+  "roleSelectContinueTeacher": "Continue as Teacher"
+
+
+}

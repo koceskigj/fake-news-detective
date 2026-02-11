@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../widgets/branded_app_bar.dart';
 import 'teacher_moderation_screen.dart';
 import 'teacher_stats_screen.dart';
@@ -38,6 +39,8 @@ class _TeacherShellState extends State<TeacherShell> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return StreamBuilder<int>(
       stream: _pendingAssignedCountStream(),
       builder: (context, snap) {
@@ -83,11 +86,11 @@ class _TeacherShellState extends State<TeacherShell> {
           bottomNavigationBar: NavigationBar(
             selectedIndex: _index,
             onDestinationSelected: (i) => setState(() => _index = i),
-            destinations: const [
-              NavigationDestination(icon: Icon(Icons.rule), label: 'Moderate'),
-              NavigationDestination(icon: Icon(Icons.bar_chart), label: 'Stats'),
-              NavigationDestination(icon: Icon(Icons.auto_fix_high), label: 'AI Tools'),
-              NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+            destinations: [
+              NavigationDestination(icon: const Icon(Icons.rule), label: l10n.teacherNavModerate),
+              NavigationDestination(icon: const Icon(Icons.bar_chart), label: l10n.teacherNavStats),
+              NavigationDestination(icon: const Icon(Icons.auto_fix_high), label: l10n.teacherNavAiTools),
+              NavigationDestination(icon: const Icon(Icons.settings), label: l10n.teacherNavSettings),
             ],
           ),
         );

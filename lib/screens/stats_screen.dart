@@ -1,63 +1,65 @@
 import 'package:flutter/material.dart';
+
+
+import '../l10n/app_localizations.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
 
 class StatsScreen extends StatelessWidget {
   const StatsScreen({super.key});
 
-  String _pct(int part, int total) {
-    if (total <= 0) return '0%';
+  String _pct(int part, int total, AppLocalizations l10n) {
+    if (total <= 0) return l10n.pctZero; // "0%"
     final p = (part / total) * 100.0;
     return '${p.toStringAsFixed(1)}%';
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final appState = AppStateScope.of(context);
     final p = appState.progress;
 
     final solved = p.casesSolvedTotal;
     final correct = p.correctAnswersTotal;
-    final accuracy = _pct(correct, solved);
+    final accuracy = _pct(correct, solved, l10n);
 
     return Scaffold(
-      appBar: const BrandedAppBar(showDailyStreak: true),
+      appBar: BrandedAppBar(
+        showDailyStreak: true,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Your Stats',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 12),
 
           _StatCard(
-            title: 'Performance',
+            title: l10n.statsPerformanceTitle,
             rows: [
-              _StatRow('Cases solved', '$solved'),
-              _StatRow('Correct answers', '$correct'),
-              _StatRow('All-time accuracy', accuracy),
+              _StatRow(l10n.statsCasesSolved, '$solved'),
+              _StatRow(l10n.statsCorrectAnswers, '$correct'),
+              _StatRow(l10n.statsAllTimeAccuracy, accuracy),
             ],
           ),
 
           const SizedBox(height: 12),
 
           _StatCard(
-            title: 'Progress',
+            title: l10n.statsProgressTitle,
             rows: [
-              _StatRow('Total XP', '${p.xp}'),
-              _StatRow('Level', '${p.level}'),
-              _StatRow('Achievements earned', '${p.unlockedAchievementIds.length}'),
+              _StatRow(l10n.statsTotalXp, '${p.xp}'),
+              _StatRow(l10n.level, '${p.level}'),
+              _StatRow(l10n.statsAchievementsEarned, '${p.unlockedAchievementIds.length}'),
             ],
           ),
 
           const SizedBox(height: 12),
 
           _StatCard(
-            title: 'Streak Records',
+            title: l10n.statsStreakRecordsTitle,
             rows: [
-              _StatRow('Best daily streak', '${p.bestDailyStreak} day(s)'),
-              _StatRow('Best correct streak', '${p.bestPerfectStreak}'),
+              _StatRow(l10n.statsBestDailyStreak, l10n.dayCount(p.bestDailyStreak)),
+              _StatRow(l10n.statsBestCorrectStreak, '${p.bestPerfectStreak}'),
             ],
           ),
         ],
@@ -82,20 +84,22 @@ class _StatCard extends StatelessWidget {
           children: [
             Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
             const SizedBox(height: 10),
-            ...rows.map((r) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      r.label,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+            ...rows.map(
+                  (r) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        r.label,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
-                  ),
-                  Text(r.value),
-                ],
+                    Text(r.value),
+                  ],
+                ),
               ),
-            )),
+            ),
           ],
         ),
       ),

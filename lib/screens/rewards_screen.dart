@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../data/achievements_catalog.dart';
+import '../l10n/app_localizations.dart'; // if you use flutter_gen, update import in your project
+import '../l10n/l10n_ext.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
 import 'achievement_detail_screen.dart';
@@ -15,6 +18,8 @@ class RewardsScreen extends StatefulWidget {
 class _RewardsScreenState extends State<RewardsScreen> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final appState = AppStateScope.of(context);
     final progress = appState.progress;
 
@@ -37,8 +42,8 @@ class _RewardsScreenState extends State<RewardsScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.bolt),
-                title: Text('Level ${progress.level}'),
-                subtitle: Text('XP: ${progress.xp}'),
+                title: Text(l10n.rewardsLevel(progress.level)),
+                subtitle: Text(l10n.rewardsXp(progress.xp)),
                 trailing: const Icon(Icons.leaderboard_outlined),
                 onTap: () async {
                   await Navigator.push(
@@ -46,15 +51,15 @@ class _RewardsScreenState extends State<RewardsScreen> {
                     MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
                   );
                   if (!mounted) return;
-                  setState(() {}); // refresh after returning
+                  setState(() {});
                 },
               ),
             ),
 
             const SizedBox(height: 16),
-            const Text(
-              'Badges',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            Text(
+              l10n.rewardsBadgesTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 10),
 
@@ -76,19 +81,21 @@ class _RewardsScreenState extends State<RewardsScreen> {
 
                   final badgePath = 'assets/achievements/${a.iconKey}.png';
 
+                  final titleText = l10n.byKey(a.title);
+
                   return InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () async {
                       if (!unlocked) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Not unlocked yet 🔒')),
+                          SnackBar(content: Text(l10n.rewardsNotUnlocked)),
                         );
                         return;
                       }
 
                       if (unlockedAt == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Unlocked date missing (debug)')),
+                          SnackBar(content: Text(l10n.rewardsUnlockedDateMissing)),
                         );
                         return;
                       }
@@ -121,8 +128,10 @@ class _RewardsScreenState extends State<RewardsScreen> {
                                 child: Image.asset(
                                   badgePath,
                                   fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) =>
-                                      Icon(Icons.emoji_events_outlined, color: fg),
+                                  errorBuilder: (_, __, ___) => Icon(
+                                    Icons.emoji_events_outlined,
+                                    color: fg,
+                                  ),
                                 ),
                               )
                             else
@@ -131,7 +140,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                             const SizedBox(height: 8),
 
                             Text(
-                              a.title,
+                              titleText,
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,

@@ -3,110 +3,74 @@ import '../models/learn_pattern.dart';
 final List<LearnPattern> learnPatterns = [
   LearnPattern(
     id: 'pattern_clickbait',
-    title: 'Clickbait',
-    shortDescription: 'Overdramatic headlines that try to force clicks.',
-    explanation:
-    'Clickbait uses emotional words and exaggeration to make you click. It often hides the real information or twists it.'
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum ',
-    checklist: [
-      'Does it say “You won’t believe…” or “Shocking”?',
-      'Is it missing details (who, where, when)?',
-      'Does it promise instant results?',
-      'Does it push you to share quickly?',
+    title: 'pattern_clickbait_title',
+    shortDescription: 'pattern_clickbait_short',
+    explanation: 'pattern_clickbait_expl',
+    checklist: const [
+      'pattern_clickbait_c1',
+      'pattern_clickbait_c2',
+      'pattern_clickbait_c3',
+      'pattern_clickbait_c4',
     ],
   ),
   LearnPattern(
     id: 'pattern_missing_source',
-    title: 'No credible source',
-    shortDescription: 'Claims without evidence or trustworthy references.',
-    explanation:
-    'A trustworthy post usually shows where the info came from. “A study says…” is not enough without details.'
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum ',
-    checklist: [
-      'Is there a real author or organization?',
-      'Are there links to official documents or data?',
-      'Is it “someone said” with no names?',
-      'Can you confirm it elsewhere?',
+    title: 'pattern_missing_source_title',
+    shortDescription: 'pattern_missing_source_short',
+    explanation: 'pattern_missing_source_expl',
+    checklist: const [
+      'pattern_missing_source_c1',
+      'pattern_missing_source_c2',
+      'pattern_missing_source_c3',
+      'pattern_missing_source_c4',
     ],
   ),
   LearnPattern(
     id: 'pattern_context',
-    title: 'Missing context',
-    shortDescription: 'True info used in a misleading way.',
-    explanation:
-    'Sometimes the words or image are real, but the post removes context (time, place, full quote) to change the meaning.'
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum ',
-    checklist: [
-      'Is the clip very short?',
-      'Could this be old content reposted?',
-      'Is the quote incomplete?',
-      'Does the post avoid giving background details?',
+    title: 'pattern_context_title',
+    shortDescription: 'pattern_context_short',
+    explanation: 'pattern_context_expl',
+    checklist: const [
+      'pattern_context_c1',
+      'pattern_context_c2',
+      'pattern_context_c3',
+      'pattern_context_c4',
     ],
   ),
   LearnPattern(
     id: 'pattern_fear',
-    title: 'Fear-based persuasion',
-    shortDescription: 'Scares you so you react fast.',
-    explanation:
-    'Fear makes people share without checking. Scams often say your phone, account, or health is in danger to push you into action.'
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum ',
-    checklist: [
-      'Does it use urgent language (“NOW!”, “WARNING!”)?',
-      'Does it threaten consequences if you don’t act?',
-      'Does it push a download or link?',
-      'Does it avoid evidence?',
+    title: 'pattern_fear_title',
+    shortDescription: 'pattern_fear_short',
+    explanation: 'pattern_fear_expl',
+    checklist: const [
+      'pattern_fear_c1',
+      'pattern_fear_c2',
+      'pattern_fear_c3',
+      'pattern_fear_c4',
     ],
   ),
   LearnPattern(
     id: 'pattern_absurd',
-    title: 'Absurd / impossible claims',
-    shortDescription: 'Claims that don’t make sense in real life.',
-    explanation:
-    'If something sounds magical or impossible, it usually is. These posts rely on surprise, not proof.'
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum ',
-    checklist: [
-      'Is it too good to be true?',
-      'Does it break basic logic/science?',
-      'Is there no clear source?',
-      'Would multiple trusted outlets report this if it were true?',
+    title: 'pattern_absurd_title',
+    shortDescription: 'pattern_absurd_short',
+    explanation: 'pattern_absurd_expl',
+    checklist: const [
+      'pattern_absurd_c1',
+      'pattern_absurd_c2',
+      'pattern_absurd_c3',
+      'pattern_absurd_c4',
     ],
   ),
   LearnPattern(
     id: 'pattern_domain',
-    title: 'Suspicious domains',
-    shortDescription: 'Websites that look official but aren’t.',
-    explanation:
-    'Fake sites often imitate real ones or use strange domains. Learning to notice small differences can protect you.'
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum '
-        'lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum ',
-    checklist: [
-      'Is the domain weird (extra dashes, misspellings)?',
-      'Does it mimic a famous site name?',
-      'Is it full of ads/popups?',
-      'Is the site missing contact/about info?',
+    title: 'pattern_domain_title',
+    shortDescription: 'pattern_domain_short',
+    explanation: 'pattern_domain_expl',
+    checklist: const [
+      'pattern_domain_c1',
+      'pattern_domain_c2',
+      'pattern_domain_c3',
+      'pattern_domain_c4',
     ],
   ),
 ];

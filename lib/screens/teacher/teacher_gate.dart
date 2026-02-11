@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+
+import '../../l10n/app_localizations.dart';
 import 'teacher_login_screen.dart';
 import 'teacher_shell.dart';
 
@@ -9,6 +12,8 @@ class TeacherGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, authSnap) {
@@ -40,9 +45,9 @@ class TeacherGate extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Could not verify teacher role.',
-                          style: TextStyle(fontWeight: FontWeight.w900),
+                        Text(
+                          l10n.teacherGateVerifyErrorTitle,
+                          style: const TextStyle(fontWeight: FontWeight.w900),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 10),
@@ -53,7 +58,7 @@ class TeacherGate extends StatelessWidget {
                         const SizedBox(height: 14),
                         FilledButton(
                           onPressed: () => FirebaseAuth.instance.signOut(),
-                          child: const Text('Sign out'),
+                          child: Text(l10n.signOut),
                         ),
                       ],
                     ),
@@ -73,19 +78,20 @@ class TeacherGate extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Not authorized as teacher.',
-                          style: TextStyle(fontWeight: FontWeight.w900),
+                        Text(
+                          l10n.teacherGateNotAuthorizedTitle,
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 10),
-                        const Text(
-                          'This account is not marked as a teacher in Firestore.',
+                        Text(
+                          l10n.teacherGateNotAuthorizedBody,
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 14),
                         FilledButton(
                           onPressed: () => FirebaseAuth.instance.signOut(),
-                          child: const Text('Sign out'),
+                          child: Text(l10n.signOut),
                         ),
                       ],
                     ),

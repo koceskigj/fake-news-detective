@@ -9,6 +9,10 @@ class UserProgress {
   /// If teacher logs in (FirebaseAuth), store uid here (optional)
   String? teacherUid;
 
+  /// ✅ NEW: separate language preference per role
+  String? studentLocale; // "en" | "mk" | null
+  String? teacherLocale; // "en" | "mk" | null
+
   String displayName;
   String avatarKey;
 
@@ -33,8 +37,10 @@ class UserProgress {
 
   UserProgress({
     required this.userId,
-    this.appMode, // <- null by default, so RoleGate shows on first run
+    this.appMode,
     this.teacherUid,
+    this.studentLocale,
+    this.teacherLocale,
     this.xp = 0,
     this.level = 1,
     this.bestDailyStreak = 0,
@@ -56,12 +62,15 @@ class UserProgress {
         achievementUnlockedAt = achievementUnlockedAt ?? <String, DateTime>{},
         recentAnswers = recentAnswers ?? <AnswerRecord>[];
 
-  // Optional but helpful (some screens may call it)
   UserProgress copyWith({
     String? userId,
     String? appMode,
     String? teacherUid,
     bool clearTeacherUid = false,
+    String? studentLocale,
+    bool clearStudentLocale = false,
+    String? teacherLocale,
+    bool clearTeacherLocale = false,
     String? displayName,
     String? avatarKey,
     int? xp,
@@ -84,6 +93,8 @@ class UserProgress {
       userId: userId ?? this.userId,
       appMode: appMode ?? this.appMode,
       teacherUid: clearTeacherUid ? null : (teacherUid ?? this.teacherUid),
+      studentLocale: clearStudentLocale ? null : (studentLocale ?? this.studentLocale),
+      teacherLocale: clearTeacherLocale ? null : (teacherLocale ?? this.teacherLocale),
       displayName: displayName ?? this.displayName,
       avatarKey: avatarKey ?? this.avatarKey,
       xp: xp ?? this.xp,
@@ -136,6 +147,11 @@ class UserProgress {
     'userId': userId,
     'appMode': appMode,
     'teacherUid': teacherUid,
+
+    // ✅ NEW
+    'studentLocale': studentLocale,
+    'teacherLocale': teacherLocale,
+
     'xp': xp,
     'level': level,
     'bestDailyStreak': bestDailyStreak,
@@ -171,10 +187,13 @@ class UserProgress {
 
     final p = UserProgress(
       userId: (json['userId'] as String?) ?? '',
-      // Backwards compatible:
-      // - if old saves had no appMode, keep null => RoleGate will show
       appMode: json['appMode'] as String?,
       teacherUid: json['teacherUid'] as String?,
+
+      // ✅ NEW
+      studentLocale: json['studentLocale'] as String?,
+      teacherLocale: json['teacherLocale'] as String?,
+
       xp: (json['xp'] as num?)?.toInt() ?? 0,
       level: (json['level'] as num?)?.toInt() ?? 1,
       bestDailyStreak: (json['bestDailyStreak'] as num?)?.toInt() ?? 0,
@@ -192,8 +211,7 @@ class UserProgress {
       solvedCaseIds: ((json['solvedCaseIds'] as List?) ?? const [])
           .map((e) => e.toString())
           .toSet(),
-      unlockedAchievementIds:
-      ((json['unlockedAchievementIds'] as List?) ?? const [])
+      unlockedAchievementIds: ((json['unlockedAchievementIds'] as List?) ?? const [])
           .map((e) => e.toString())
           .toSet(),
       achievementUnlockedAt: unlockedAt,

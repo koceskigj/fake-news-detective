@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/local_storage.dart';
 
 class RoleSelectScreen extends StatelessWidget {
@@ -7,6 +8,7 @@ class RoleSelectScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     Future<void> choose(String mode) async {
       await LocalStorage.saveAppMode(mode);
@@ -24,13 +26,14 @@ class RoleSelectScreen extends StatelessWidget {
             children: [
               Icon(Icons.manage_search, size: 80, color: cs.primary),
               const SizedBox(height: 16),
-              const Text(
-                'Choose your role',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+              Text(
+                l10n.roleSelectTitle,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
               Text(
-                'Students learn to spot fake news.\nTeachers moderate and publish student cases.',
+                l10n.roleSelectSubtitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: cs.onSurfaceVariant,
@@ -44,7 +47,7 @@ class RoleSelectScreen extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () => choose("student"),
-                  child: const Text('Continue as Student'),
+                  child: Text(l10n.roleSelectContinueStudent),
                 ),
               ),
               const SizedBox(height: 12),
@@ -52,7 +55,7 @@ class RoleSelectScreen extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton.tonal(
                   onPressed: () => choose("teacher"),
-                  child: const Text('Continue as Teacher'),
+                  child: Text(l10n.roleSelectContinueTeacher),
                 ),
               ),
             ],

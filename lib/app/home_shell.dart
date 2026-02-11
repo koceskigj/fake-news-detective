@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../screens/cases_screen.dart';
 import '../screens/create_case_screen.dart';
 import '../screens/learn_screen.dart';
@@ -32,10 +33,8 @@ class _HomeShellState extends State<HomeShell>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Initialize tab index (important for onboarding redirect)
     _index = widget.initialIndex;
 
-    // Trigger once after first build (app start)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       AppStateScope.of(context).onAppResumed();
@@ -62,6 +61,8 @@ class _HomeShellState extends State<HomeShell>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: IndexedStack(
         index: _index,
@@ -70,31 +71,31 @@ class _HomeShellState extends State<HomeShell>
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: _onTap,
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.article_outlined),
-            selectedIcon: Icon(Icons.article),
-            label: 'Cases',
+            icon: const Icon(Icons.article_outlined),
+            selectedIcon: const Icon(Icons.article),
+            label: l10n.navCases,
           ),
           NavigationDestination(
-            icon: Icon(Icons.school_outlined),
-            selectedIcon: Icon(Icons.school),
-            label: 'Learn',
+            icon: const Icon(Icons.school_outlined),
+            selectedIcon: const Icon(Icons.school),
+            label: l10n.navLearn,
           ),
           NavigationDestination(
-            icon: Icon(Icons.emoji_events_outlined),
-            selectedIcon: Icon(Icons.emoji_events),
-            label: 'Rewards',
+            icon: const Icon(Icons.emoji_events_outlined),
+            selectedIcon: const Icon(Icons.emoji_events),
+            label: l10n.navRewards,
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profile',
+            icon: const Icon(Icons.person_outline),
+            selectedIcon: const Icon(Icons.person),
+            label: l10n.navProfile,
           ),
           NavigationDestination(
-            icon: Icon(Icons.add_box_outlined),
-            selectedIcon: Icon(Icons.add_box),
-            label: 'Create',
+            icon: const Icon(Icons.add_box_outlined),
+            selectedIcon: const Icon(Icons.add_box),
+            label: l10n.navCreate,
           ),
         ],
       ),

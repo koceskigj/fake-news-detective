@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+
+import '../l10n/app_localizations.dart';
 import '../widgets/branded_app_bar.dart';
 
 class CreateCaseScreen extends StatefulWidget {
@@ -39,7 +41,8 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
   }
 
   String? _required(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Required';
+    final l10n = AppLocalizations.of(context)!;
+    if (v == null || v.trim().isEmpty) return l10n.required;
     return null;
   }
 
@@ -91,12 +94,13 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
   }
 
   Future<void> _send() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_sending) return;
 
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid || _isFake == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields and choose REAL/FAKE.')),
+        SnackBar(content: Text(l10n.createCaseFillAllFields)),
       );
       return;
     }
@@ -111,7 +115,6 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
         'status': 'pending',
         'createdBy': uid,
         'createdAt': FieldValue.serverTimestamp(),
-
         'title': _title.text.trim(),
         'snippet': _snippet.text.trim(),
         'sourceName': _sourceName.text.trim(),
@@ -130,7 +133,7 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
         context: context,
         barrierDismissible: false,
         builder: (_) => AlertDialog(
-          title: const Text('Nice work, detective!'),
+          title: Text(l10n.createCaseSuccessTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -140,17 +143,14 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                 fit: BoxFit.contain,
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Your case was sent to the teachers for review.\n'
-                    'Once approved, other students will be able to solve it.',
-              ),
+              Text(l10n.createCaseSuccessBody),
             ],
           ),
           actions: [
             Center(
               child: FilledButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Continue'),
+                child: Text(l10n.continueLabel),
               ),
             ),
           ],
@@ -161,19 +161,15 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
     } on FirebaseException catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.code == 'permission-denied'
-                ? 'Permission denied. Check you published rules on the SAME Firebase project.'
-                : 'Could not send case: ${e.message ?? e.code}',
-          ),
-        ),
-      );
+      final msg = (e.code == 'permission-denied')
+          ? l10n.createCasePermissionDenied
+          : l10n.createCaseCouldNotSend(e.message ?? e.code);
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not send case: $e')),
+        SnackBar(content: Text(l10n.createCaseCouldNotSend(e.toString()))),
       );
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -182,10 +178,12 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: const BrandedAppBar(),
+      appBar: BrandedAppBar(
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -194,7 +192,7 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
             child: ListView(
               children: [
                 Text(
-                  'Send a news case for teachers to review.',
+                  l10n.createCaseIntro,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: cs.onSurfaceVariant,
@@ -205,9 +203,9 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                 TextFormField(
                   controller: _title,
                   validator: _required,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.createCaseFieldTitle,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -217,9 +215,9 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                   validator: _required,
                   minLines: 2,
                   maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Snippet / short text',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.createCaseFieldSnippet,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -230,9 +228,9 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                       child: TextFormField(
                         controller: _sourceName,
                         validator: _required,
-                        decoration: const InputDecoration(
-                          labelText: 'Source name',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: l10n.createCaseFieldSourceName,
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                     ),
@@ -241,9 +239,9 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                       child: TextFormField(
                         controller: _sourceUrl,
                         validator: _required,
-                        decoration: const InputDecoration(
-                          labelText: 'Source URL',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: l10n.createCaseFieldSourceUrl,
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                     ),
@@ -256,9 +254,9 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                   validator: _required,
                   minLines: 3,
                   maxLines: 6,
-                  decoration: const InputDecoration(
-                    labelText: 'Explanation (why REAL/FAKE)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.createCaseFieldExplanation,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -266,10 +264,10 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                 TextFormField(
                   controller: _tags,
                   validator: _required,
-                  decoration: const InputDecoration(
-                    labelText: 'Tags (comma-separated)',
-                    hintText: 'clickbait, missing-source, fearbait',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.createCaseFieldTags,
+                    hintText: l10n.createCaseTagsHint,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -283,13 +281,16 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Correct answer', style: TextStyle(fontWeight: FontWeight.w900)),
+                      Text(
+                        l10n.createCaseCorrectAnswer,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
                           Expanded(
                             child: ChoiceChip(
-                              label: const Text('REAL'),
+                              label: Text(l10n.realUpper),
                               selected: _isFake == false,
                               onSelected: (_) => setState(() => _isFake = false),
                             ),
@@ -297,7 +298,7 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: ChoiceChip(
-                              label: const Text('FAKE'),
+                              label: Text(l10n.fakeUpper),
                               selected: _isFake == true,
                               onSelected: (_) => setState(() => _isFake = true),
                             ),
@@ -318,14 +319,26 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Difficulty', style: TextStyle(fontWeight: FontWeight.w900)),
+                      Text(
+                        l10n.difficulty,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<int>(
                         value: _difficulty,
-                        items: const [
-                          DropdownMenuItem(value: 1, child: Text('1 (Easy)')),
-                          DropdownMenuItem(value: 2, child: Text('2 (Medium)')),
-                          DropdownMenuItem(value: 3, child: Text('3 (Hard)')),
+                        items: [
+                          DropdownMenuItem(
+                            value: 1,
+                            child: Text(l10n.difficultyEasy(1)),
+                          ),
+                          DropdownMenuItem(
+                            value: 2,
+                            child: Text(l10n.difficultyMedium(2)),
+                          ),
+                          DropdownMenuItem(
+                            value: 3,
+                            child: Text(l10n.difficultyHard(3)),
+                          ),
                         ],
                         onChanged: (v) => setState(() => _difficulty = v ?? 1),
                         decoration: const InputDecoration(border: OutlineInputBorder()),
@@ -346,7 +359,7 @@ class _CreateCaseScreenState extends State<CreateCaseScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                         : const Icon(Icons.send),
-                    label: Text(_sending ? 'Sending…' : 'Send case'),
+                    label: Text(_sending ? l10n.sendingEllipsis : l10n.createCaseSendButton),
                   ),
                 ),
               ],

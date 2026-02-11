@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/answer_record.dart';
 import '../state/app_state_scope.dart';
 import '../widgets/branded_app_bar.dart';
+import '../l10n/app_localizations.dart';
 import 'case_review_screen.dart';
 
 class CaseLibraryScreen extends StatefulWidget {
@@ -22,6 +23,8 @@ class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final appState = AppStateScope.of(context);
     final progress = appState.progress;
 
@@ -39,14 +42,14 @@ class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Recent cases',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                    l10n.caseLibraryRecentCases,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
                 FilterChip(
-                  label: const Text('Mistakes only'),
+                  label: Text(l10n.caseLibraryMistakesOnly),
                   selected: _mistakesOnly,
                   onSelected: (v) => setState(() => _mistakesOnly = v),
                 ),
@@ -55,9 +58,9 @@ class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
             const SizedBox(height: 10),
             Expanded(
               child: visible.isEmpty
-                  ? const Center(
+                  ? Center(
                 child: Text(
-                  'Nothing to review yet.\nPlay some cases first.',
+                  l10n.caseLibraryEmpty,
                   textAlign: TextAlign.center,
                 ),
               )
@@ -80,8 +83,9 @@ class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
                       ? Icons.check_circle_outline
                       : Icons.error_outline;
 
-                  final answerText =
-                  r.userChoice == AnswerChoice.fake ? 'FAKE' : 'REAL';
+                  final answerText = r.userChoice == AnswerChoice.fake
+                      ? l10n.fakeUpper
+                      : l10n.realUpper;
 
                   return Card(
                     clipBehavior: Clip.antiAlias,
@@ -106,8 +110,7 @@ class _CaseLibraryScreenState extends State<CaseLibraryScreen> {
                             color: fgColor.withOpacity(0.9),
                           ),
                         ),
-                        trailing:
-                        Icon(Icons.chevron_right, color: fgColor),
+                        trailing: Icon(Icons.chevron_right, color: fgColor),
                         onTap: () {
                           Navigator.push(
                             context,

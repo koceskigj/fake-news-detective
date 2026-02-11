@@ -46,7 +46,6 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // ✅ TRUE CENTER (entire AppBar width)
             Center(
               child: SizedBox(
                 height: 22,

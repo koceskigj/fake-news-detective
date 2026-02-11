@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../widgets/speech_bubble.dart';
 
 class TeacherStatsScreen extends StatelessWidget {
@@ -17,6 +18,7 @@ class TeacherStatsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: SafeArea(
@@ -24,7 +26,7 @@ class TeacherStatsScreen extends StatelessWidget {
           stream: _stream(),
           builder: (context, snap) {
             if (snap.hasError) {
-              return Center(child: Text('Stats error: ${snap.error}'));
+              return Center(child: Text(l10n.teacherStatsError('${snap.error}')));
             }
             if (!snap.hasData) {
               return const Center(child: CircularProgressIndicator());
@@ -32,9 +34,9 @@ class TeacherStatsScreen extends StatelessWidget {
 
             final docs = snap.data!.docs;
             if (docs.isEmpty) {
-              return const Center(
+              return Center(
                 child: Text(
-                  'No answers logged yet.\nPlay some cases first.',
+                  l10n.teacherStatsEmpty,
                   textAlign: TextAlign.center,
                 ),
               );
@@ -63,7 +65,9 @@ class TeacherStatsScreen extends StatelessWidget {
             final total = night + morning + afternoon + evening;
 
             double frac(int v) => total == 0 ? 0 : (v / total);
-            String pctText(int v) => total == 0 ? '0.0%' : '${(v * 100.0 / total).toStringAsFixed(1)}%';
+
+            String pctText(int v) =>
+                total == 0 ? '0.0%' : '${(v * 100.0 / total).toStringAsFixed(1)}%';
 
             Widget statBar({
               required String label,
@@ -81,10 +85,7 @@ class TeacherStatsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      label,
-                      style: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
+                    Text(label, style: const TextStyle(fontWeight: FontWeight.w900)),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
@@ -95,7 +96,6 @@ class TeacherStatsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
 
-                    // Bar
                     ClipRRect(
                       borderRadius: BorderRadius.circular(999),
                       child: SizedBox(
@@ -122,12 +122,11 @@ class TeacherStatsScreen extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    // Numbers
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '$value answers',
+                          l10n.teacherStatsAnswersCount(value),
                           style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                         Text(
@@ -147,7 +146,6 @@ class TeacherStatsScreen extends StatelessWidget {
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // 🐵 STOJCHE HEADER SECTION
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -162,10 +160,7 @@ class TeacherStatsScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: SpeechBubble(
-                        text:
-                        'I brought you the data that shows\n'
-                            'in which part of the day the students '
-                            'play the cases.',
+                        text: l10n.teacherStatsHeaderBubble,
                         backgroundColor: cs.secondaryContainer,
                         textColor: cs.onSecondaryContainer,
                       ),
@@ -176,7 +171,7 @@ class TeacherStatsScreen extends StatelessWidget {
                 const SizedBox(height: 18),
 
                 Text(
-                  'Total answers logged: $total',
+                  l10n.teacherStatsTotalAnswers(total),
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 16,
@@ -186,35 +181,34 @@ class TeacherStatsScreen extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 statBar(
-                  label: 'Night',
-                  subtitle: '1AM–7AM',
+                  label: l10n.teacherStatsNight,
+                  subtitle: l10n.teacherStatsNightTime,
                   value: night,
                   fraction: frac(night),
                 ),
                 statBar(
-                  label: 'Morning',
-                  subtitle: '7AM–1PM',
+                  label: l10n.teacherStatsMorning,
+                  subtitle: l10n.teacherStatsMorningTime,
                   value: morning,
                   fraction: frac(morning),
                 ),
                 statBar(
-                  label: 'Afternoon',
-                  subtitle: '1PM–7PM',
+                  label: l10n.teacherStatsAfternoon,
+                  subtitle: l10n.teacherStatsAfternoonTime,
                   value: afternoon,
                   fraction: frac(afternoon),
                 ),
                 statBar(
-                  label: 'Evening',
-                  subtitle: '7PM–1AM',
+                  label: l10n.teacherStatsEvening,
+                  subtitle: l10n.teacherStatsEveningTime,
                   value: evening,
                   fraction: frac(evening),
                 ),
 
                 const SizedBox(height: 8),
 
-                // Optional small note
                 Text(
-                  'Tip: The bars show the percentage split of the latest $total answers.',
+                  l10n.teacherStatsTip(total),
                   style: TextStyle(
                     color: cs.onSurfaceVariant,
                     fontWeight: FontWeight.w600,

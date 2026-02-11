@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart'; // if you use flutter_gen, update import in your project
+import '../l10n/l10n_ext.dart';
 import '../models/achievement.dart';
 import '../widgets/branded_app_bar.dart';
 
@@ -21,23 +23,27 @@ class AchievementDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    final titleText = l10n.byKey(achievement.title);
+    final descText = l10n.byKey(achievement.description);
+
     return Scaffold(
-      appBar: BrandedAppBar(showDailyStreak: true, extraActions: const []),
+      appBar: const BrandedAppBar(showDailyStreak: true),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            achievement.title,
+            titleText,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 8),
           Text(
-            achievement.description,
+            descText,
             style: const TextStyle(fontSize: 16, height: 1.3),
           ),
           const SizedBox(height: 14),
 
-          // ✅ Badge image under the description
           Center(
             child: SizedBox(
               width: 360,
@@ -46,7 +52,6 @@ class AchievementDetailScreen extends StatelessWidget {
                 _assetPath,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stack) {
-                  // Fallback if image missing
                   return const Center(
                     child: Icon(Icons.emoji_events_outlined, size: 80),
                   );
@@ -60,15 +65,15 @@ class AchievementDetailScreen extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const Icon(Icons.calendar_month_outlined),
-              title: const Text('Unlocked on'),
+              title: Text(l10n.achievementUnlockedOn),
               subtitle: Text(_fmtDate(unlockedAt)),
             ),
           ),
           Card(
             child: ListTile(
               leading: const Icon(Icons.bolt),
-              title: const Text('XP reward'),
-              subtitle: Text('${achievement.xpReward} XP'),
+              title: Text(l10n.achievementXpReward),
+              subtitle: Text(l10n.achievementXpValue(achievement.xpReward)),
             ),
           ),
         ],

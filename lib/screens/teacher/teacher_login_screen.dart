@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../state/app_state_scope.dart';
 import '../role_gate/role_gate_screen.dart';
 import 'teacher_shell.dart';
@@ -19,15 +20,15 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
   bool _loading = false;
 
   Future<bool> _isTeacher(String uid) async {
-    final doc =
-    await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     return doc.exists && doc.data()?['role'] == 'teacher';
   }
 
   String _friendlyAuthError(Object e) {
-    // Default message you asked for (custom, not raw Firebase text)
-    const generic =
-        'A teacher with these credentials does not exist. Try again.';
+    final l10n = AppLocalizations.of(context)!;
+
+    // default message
+    final generic = l10n.teacherLoginErrGeneric;
 
     if (e is FirebaseAuthException) {
       switch (e.code) {
@@ -37,11 +38,11 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
         case 'invalid-credential':
           return generic;
         case 'user-disabled':
-          return 'This teacher account is disabled. Please contact the administrator.';
+          return l10n.teacherLoginErrDisabled;
         case 'network-request-failed':
-          return 'Network error. Please check your internet connection and try again.';
+          return l10n.teacherLoginErrNetwork;
         case 'too-many-requests':
-          return 'Too many attempts. Please wait a bit and try again.';
+          return l10n.teacherLoginErrTooMany;
         default:
           return generic;
       }
@@ -53,15 +54,17 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
   Future<void> _showErrorDialog(String message) async {
     if (!mounted) return;
 
+    final l10n = AppLocalizations.of(context)!;
+
     await showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Login failed'),
+        title: Text(l10n.teacherLoginFailedTitle),
         content: Text(message),
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            child: Text(l10n.ok),
           ),
         ],
       ),
@@ -74,11 +77,13 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
     setState(() => _loading = true);
 
     try {
+      final l10n = AppLocalizations.of(context)!;
+
       final email = _email.text.trim();
       final pass = _pass.text;
 
       if (email.isEmpty || pass.isEmpty) {
-        await _showErrorDialog('Please enter both email and password.');
+        await _showErrorDialog(l10n.teacherLoginErrEnterBoth);
         return;
       }
 
@@ -90,23 +95,17 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
       final uid = cred.user?.uid;
       if (uid == null) {
         await FirebaseAuth.instance.signOut();
-        await _showErrorDialog(
-          'A teacher with these credentials does not exist. Try again.',
-        );
+        await _showErrorDialog(l10n.teacherLoginErrGeneric);
         return;
       }
 
       final teacher = await _isTeacher(uid);
       if (!teacher) {
-        // IMPORTANT: sign out so teacher-only rules don't accidentally apply
         await FirebaseAuth.instance.signOut();
-        await _showErrorDialog(
-          'This account is not registered as a teacher.',
-        );
+        await _showErrorDialog(l10n.teacherLoginErrNotTeacher);
         return;
       }
 
-      // Save teacher mode into your local progress
       final appState = AppStateScope.of(context);
       await appState.setTeacherUid(uid);
 
@@ -123,7 +122,6 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
   }
 
   Future<void> _backToRolePick() async {
-    // IMPORTANT: if teacher started login, make sure we sign out any auth session
     await FirebaseAuth.instance.signOut();
 
     if (!mounted) return;
@@ -139,7 +137,6 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
     );
   }
 
-
   @override
   void dispose() {
     _email.dispose();
@@ -149,12 +146,15 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Teacher login'),
+        title: Text(l10n.teacherLoginTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: _loading ? null : _backToRolePick,
+          tooltip: l10n.back,
         ),
       ),
       body: Padding(
@@ -163,14 +163,14 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
           children: [
             TextField(
               controller: _email,
-              decoration: const InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: l10n.email),
               keyboardType: TextInputType.emailAddress,
               autofillHints: const [AutofillHints.username, AutofillHints.email],
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _pass,
-              decoration: const InputDecoration(labelText: 'Password'),
+              decoration: InputDecoration(labelText: l10n.password),
               obscureText: true,
               autofillHints: const [AutofillHints.password],
               onSubmitted: (_) => _login(),
@@ -186,12 +186,12 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-                    : const Text('Login'),
+                    : Text(l10n.login),
               ),
             ),
             TextButton(
               onPressed: _loading ? null : _backToRolePick,
-              child: const Text('Back'),
+              child: Text(l10n.back),
             ),
           ],
         ),

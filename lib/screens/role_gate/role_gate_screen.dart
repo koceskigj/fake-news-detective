@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../../l10n/app_localizations.dart';
 import '../../state/app_state_scope.dart';
 import '../onboarding/onboarding_flow.dart';
-
-// Change this import to your real teacher login screen file/class:
 import '../teacher/teacher_login_screen.dart';
 
 class RoleGateScreen extends StatelessWidget {
@@ -12,6 +12,7 @@ class RoleGateScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -24,14 +25,15 @@ class RoleGateScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    'Choose your role',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                  Text(
+                    l10n.roleGateTitle,
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.w900),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Students play cases.\nTeachers review student-made cases.',
+                    l10n.roleGateSubtitle,
                     style: TextStyle(
                       fontSize: 16,
                       height: 1.3,
@@ -46,18 +48,21 @@ class RoleGateScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _RoleCard(
-                          title: 'Student',
-                          subtitle: 'Play & learn',
+                          title: l10n.roleStudentTitle,
+                          subtitle: l10n.roleStudentSubtitle,
                           icon: Icons.school_outlined,
                           onTap: forceTeacher
                               ? null
                               : () async {
-                            final appState = AppStateScope.of(context);
+                            final appState =
+                            AppStateScope.of(context);
                             await appState.setAppModeStudent();
 
                             if (!context.mounted) return;
                             Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(builder: (_) => const OnboardingFlow()),
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                  const OnboardingFlow()),
                             );
                           },
                         ),
@@ -65,16 +70,19 @@ class RoleGateScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _RoleCard(
-                          title: 'Teacher',
-                          subtitle: 'Review cases',
+                          title: l10n.roleTeacherTitle,
+                          subtitle: l10n.roleTeacherSubtitle,
                           icon: Icons.admin_panel_settings_outlined,
                           onTap: () async {
-                            final appState = AppStateScope.of(context);
+                            final appState =
+                            AppStateScope.of(context);
                             await appState.setAppModeTeacher();
 
                             if (!context.mounted) return;
                             Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(builder: (_) => const TeacherLoginScreen()),
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                  const TeacherLoginScreen()),
                             );
                           },
                         ),
@@ -85,8 +93,8 @@ class RoleGateScreen extends StatelessWidget {
                   const SizedBox(height: 18),
                   Text(
                     forceTeacher
-                        ? 'Teacher mode selected.'
-                        : 'You can switch role later by resetting progress (optional).',
+                        ? l10n.roleGateTeacherForced
+                        : l10n.roleGateHint,
                     style: TextStyle(color: cs.onSurfaceVariant),
                     textAlign: TextAlign.center,
                   ),
@@ -138,11 +146,18 @@ class _RoleCard extends StatelessWidget {
                 child: Icon(icon, color: cs.onPrimaryContainer),
               ),
               const SizedBox(height: 12),
-              Text(title,
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              Text(
+                title,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w900, fontSize: 16),
+              ),
               const SizedBox(height: 4),
-              Text(subtitle,
-                  style: TextStyle(color: cs.onSurfaceVariant, fontWeight: FontWeight.w600)),
+              Text(
+                subtitle,
+                style: TextStyle(
+                    color: cs.onSurfaceVariant,
+                    fontWeight: FontWeight.w600),
+              ),
             ],
           ),
         ),

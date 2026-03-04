@@ -59,9 +59,6 @@ class FirestoreCaseRepository {
     required bool excludeMyOwn,
   }) async {
     try {
-      // ✅ IMPORTANT:
-      // Keep the query "status == approved" so Firestore rules allow the query.
-      // ✅ DO NOT orderBy(createdAt) here, to avoid needing a composite index.
       final snap = await _db
           .collection('user_cases')
           .where('status', isEqualTo: 'approved')

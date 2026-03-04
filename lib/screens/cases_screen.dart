@@ -51,7 +51,6 @@ class _CasesScreenState extends State<CasesScreen> {
     }
   }
 
-  /// ✅ Guarantee we have an authed user before ANY Firestore read.
   Future<User> _ensureSignedIn() async {
     final auth = FirebaseAuth.instance;
     final current = auth.currentUser;
@@ -77,12 +76,10 @@ class _CasesScreenState extends State<CasesScreen> {
     });
 
     try {
-      // ✅ make sure we are signed in before querying Firestore
       final user = await _ensureSignedIn();
 
       final appState = AppStateScope.of(context);
 
-      // ✅ use FirebaseAuth uid for repo + solved list (avoids mismatch)
       final myUid = user.uid;
 
       final nextItem = await appState.caseRepository.getNextCase(

@@ -138,16 +138,13 @@ class FakeNewsDetectiveApp extends StatelessWidget {
                 debugShowCheckedModeBanner: false,
                 theme: AppTheme.light(),
 
-                // ✅ Your chosen language:
                 locale: Locale(state.activeLocaleCode),
 
-                // ✅ Supported languages:
                 supportedLocales: const [
                   Locale('en'),
                   Locale('mk'),
                 ],
 
-                // ✅ Generated + Flutter delegates:
                 localizationsDelegates: const [
                   AppLocalizations.delegate,
                   GlobalMaterialLocalizations.delegate,

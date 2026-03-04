@@ -3,13 +3,11 @@ import 'answer_record.dart';
 class UserProgress {
   final String userId;
 
-  /// 'student' | 'teacher' | null (null => show RoleGate)
   String? appMode;
 
   /// If teacher logs in (FirebaseAuth), store uid here (optional)
   String? teacherUid;
 
-  /// ✅ NEW: separate language preference per role
   String? studentLocale; // "en" | "mk" | null
   String? teacherLocale; // "en" | "mk" | null
 
@@ -148,7 +146,6 @@ class UserProgress {
     'appMode': appMode,
     'teacherUid': teacherUid,
 
-    // ✅ NEW
     'studentLocale': studentLocale,
     'teacherLocale': teacherLocale,
 
@@ -190,7 +187,6 @@ class UserProgress {
       appMode: json['appMode'] as String?,
       teacherUid: json['teacherUid'] as String?,
 
-      // ✅ NEW
       studentLocale: json['studentLocale'] as String?,
       teacherLocale: json['teacherLocale'] as String?,
 

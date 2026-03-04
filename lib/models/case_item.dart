@@ -25,9 +25,7 @@ class CaseItem {
     this.status,
   });
 
-  /// Derived: used for analytics / stats logging
   String get sourceCollection {
-    // If it has createdBy or status, it's a user_cases doc
     if (createdBy != null || status != null) return 'user_cases';
     return 'ai_cases';
   }

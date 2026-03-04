@@ -21,7 +21,6 @@ class Achievement {
   final String title;
   final String description;
 
-  /// Use an icon key now; later you can map it to an actual asset/image.
   final String iconKey;
 
   final int xpReward;

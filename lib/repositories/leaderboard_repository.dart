@@ -8,11 +8,6 @@ class LeaderboardRepository {
 
   CollectionReference<Map<String, dynamic>> get _col => _db.collection('leaderboard');
 
-  /// IMPORTANT:
-  /// Firestore rules require:
-  /// match /leaderboard/{uid} { allow create, update: if request.auth.uid == uid; }
-  ///
-  /// So docId MUST be FirebaseAuth.uid (not your local progress.userId).
   Future<void> upsertFromProgress(UserProgress p, {required String uid}) async {
     final doc = _col.doc(uid);
 

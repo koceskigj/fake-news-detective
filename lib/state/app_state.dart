@@ -14,7 +14,6 @@ import '../services/local_storage.dart';
 class AppState extends ChangeNotifier {
   final UserProgress progress;
 
-  /// ✅ Firestore-only cases
   final FirestoreCaseRepository caseRepository = FirestoreCaseRepository();
 
   final LeaderboardRepository _leaderboardRepo = LeaderboardRepository();
@@ -46,9 +45,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // ----------------------------
-  // ✅ Locale settings (student/teacher separate)
-  // ----------------------------
 
   String get studentLocaleCode => (progress.studentLocale ?? 'en');
   String get teacherLocaleCode => (progress.teacherLocale ?? 'en');
@@ -426,10 +422,6 @@ class AppState extends ChangeNotifier {
     progress.appMode = null;
     progress.teacherUid = null;
 
-    // ✅ optional: keep language selections even after reset
-    // If you want reset to also reset language, uncomment:
-    // progress.studentLocale = null;
-    // progress.teacherLocale = null;
 
     _pendingDailyStreakEvent = null;
 

@@ -1,16 +1,71 @@
-# fake_news_detective
+Fake News Detective
+A Flutter educational game that teaches students how to identify fake news by solving cases, learning misinformation patterns, and earning achievements.
+Students analyze news claims and determine whether they are REAL or FAKE using logic and clues provided by the in-app guide Stojche.
+The project includes a student mode and a teacher mode where teachers can review and approve student-created cases.
 
-A multi-platform educational application that helps children and teenagers recognize fake news and misleading online content through interactive quizzes and gamified challenges.
+Features
 
-## Getting Started
+Student
+-------
+Solve fake news detection cases
+Ask the in-app assistant Stojche for hints
+Earn XP and unlock achievements
+Maintain daily streaks
+Learn misinformation patterns
+Review solved cases
+View leaderboard
+-------
 
-This project is a starting point for a Flutter application.
+Teacher
+-------
+Moderate student-submitted cases
+Approve or decline cases
+Generate AI-based cases
+View statistics about student activity
+-------
 
-A few resources to get you started if this is your first Flutter project:
+Tech Stack
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Flutter
+Dart
+Firebase Authentication
+Cloud Firestore
+Firebase Cloud Functions
+Material Design 3
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Requirements
+
+Install the following before running the project:
+Flutter SDK (3.x recommended)
+Android Studio or IntelliJ IDEA
+Android Emulator or physical Android device
+
+Verify installation:
+
+flutter doctor
+
+1. Clone the repository
+
+git clone https://github.com/koceskigj/fake-news-detective.git
+cd fake-news-detective
+2. Install dependencies
+
+flutter pub get
+All dependencies are already defined in:
+
+pubspec.yaml
+
+3. Generate localization files
+This project uses Flutter localization (l10n).
+Run:
+
+flutter gen-l10n
+If this fails, run:
+
+flutter pub get
+flutter gen-l10n
+
+Firebase Setup
+This repository does not include Firebase configuration files for security reasons.
+To run the app, you must add the Firebase configuration files manually:
+flutterfire configure
